@@ -47,6 +47,7 @@ def register_tech_routes(app):
     def tech_dashboard():
         status = request.args.get("status", "").strip()
         q = request.args.get("q", "").strip()
+        ticket_id_raw = request.args.get("ticket_id", "").strip()
 
         db = SessionLocal()
         try:
@@ -65,12 +66,63 @@ def register_tech_routes(app):
                 )
 
             tickets = tickets_q.order_by(Ticket.updated_at.desc()).all()
+            status_options = list_status_names(db)
+
+            selected_ticket = None
+            public_msgs = []
+            internal_msgs = []
+            proof_files = []
+            issue_files = []
+            health = None
+            health_questions = []
+            health_questions_json = "[]"
+            closure = None
+
+            if ticket_id_raw:
+                try:
+                    ticket_id = int(ticket_id_raw)
+                except ValueError:
+                    ticket_id = None
+
+                if ticket_id:
+                    selected_ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+                    if not selected_ticket or selected_ticket.assigned_technician_id != current_user.user_id:
+                        abort(404)
+
+                    public_msgs = [m for m in selected_ticket.messages if m.message_type == "Public"]
+                    internal_msgs = [m for m in selected_ticket.messages if m.message_type == "Internal"]
+                    proof_files = [a for a in selected_ticket.attachments if a.attachment_type == "Proof-of-Fix"]
+                    issue_files = [a for a in selected_ticket.attachments if a.attachment_type == "Issue"]
+                    health = latest_health_check(selected_ticket)
+
+                    existing_questions_json = selected_ticket.health_questions_json
+                    health_questions = get_or_create_health_questions(selected_ticket, db)
+                    if not existing_questions_json and selected_ticket.health_questions_json:
+                        try:
+                            db.commit()
+                        except Exception:
+                            db.rollback()
+
+                    health_questions_json = selected_ticket.health_questions_json or json.dumps(
+                        health_questions, ensure_ascii=True, separators=(",", ":")
+                    )
+                    closure = selected_ticket.closure_confirmation
+
             return render_template(
                 "tech_dashboard.html",
                 tickets=tickets,
                 status=status,
                 q=q,
-                status_options=list_status_names(db),
+                selected_ticket=selected_ticket,
+                public_msgs=public_msgs,
+                internal_msgs=internal_msgs,
+                issue_files=issue_files,
+                proof_files=proof_files,
+                health=health,
+                health_questions=health_questions,
+                health_questions_json=health_questions_json,
+                closure=closure,
+                status_options=status_options,
             )
         finally:
             db.close()
@@ -78,6 +130,16 @@ def register_tech_routes(app):
     @app.route("/tech/ticket/<int:ticket_id>", methods=["GET", "POST"])
     @require_role("tech")
     def tech_ticket(ticket_id: int):
+        if request.method == "GET":
+            return redirect(
+                url_for(
+                    "tech_dashboard",
+                    ticket_id=ticket_id,
+                    status=request.args.get("status", "").strip(),
+                    q=request.args.get("q", "").strip(),
+                )
+            )
+
         db = SessionLocal()
         try:
             ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
@@ -258,40 +320,13 @@ def register_tech_routes(app):
                 if requester_notification:
                     event_key, summary = requester_notification
                     notify_requester(ticket, event_key, summary, base_url=request.url_root)
-                return redirect(url_for("tech_ticket", ticket_id=ticket.id))
-
-            # GET
-            ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
-            public_msgs = [m for m in ticket.messages if m.message_type == "Public"]
-            internal_msgs = [m for m in ticket.messages if m.message_type == "Internal"]
-            proof_files = [a for a in ticket.attachments if a.attachment_type == "Proof-of-Fix"]
-            issue_files = [a for a in ticket.attachments if a.attachment_type == "Issue"]
-            health = latest_health_check(ticket)
-
-            existing_questions_json = ticket.health_questions_json
-            qs = get_or_create_health_questions(ticket, db)
-            if not existing_questions_json and ticket.health_questions_json:
-                try:
-                    db.commit()
-                except Exception:
-                    db.rollback()
-
-            health_questions_json = ticket.health_questions_json or json.dumps(
-                qs, ensure_ascii=True, separators=(",", ":")
-            )
-
-            return render_template(
-                "tech_ticket.html",
-                ticket=ticket,
-                public_msgs=public_msgs,
-                internal_msgs=internal_msgs,
-                issue_files=issue_files,
-                proof_files=proof_files,
-                health=health,
-                health_questions=qs,
-                health_questions_json=health_questions_json,
-                closure=ticket.closure_confirmation,
-                status_options=list_status_names(db),
-            )
+                return redirect(
+                    url_for(
+                        "tech_dashboard",
+                        ticket_id=ticket.id,
+                        status=request.form.get("return_status", "").strip(),
+                        q=request.form.get("return_q", "").strip(),
+                    )
+                )
         finally:
             db.close()
