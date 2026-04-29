@@ -1,0 +1,154 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="p-4 rounded-4 bg-body-tertiary border">
+      <h1 class="h3 mb-2">IT Ticket Management System</h1>
+      <p class="text-muted mb-3">
+        Submit support requests and monitor progress through a private tracking link.
+      </p>
+      <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-primary" href="{{ url_for('submit') }}">Submit a Ticket</a>
+        <a class="btn btn-outline-secondary" href="#track">Track a Ticket</a>
+        <a class="btn btn-outline-dark" href="{{ url_for('tech_login') }}">Technician Login</a>
+        <a class="btn btn-outline-dark" href="{{ url_for('admin_login') }}">Admin Login</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="p-4 rounded-4 border">
+      <h2 class="h5">Welcome to the IT Ticket Management System</h2>
+      <div class="mt-2">The following services are available to requesters:</div>
+      <ul class="mt-2 mb-0">
+        <li>Submit a support ticket by providing the issue details and any relevant attachment.</li>
+        <li>Receive a ticket ID and private tracking link immediately after submission.</li>
+        <li>Review ticket status at any time through the tracking link without signing in.</li>
+        <li>View technician updates and public responses on the tracking page.</li>
+        <li>Confirm ticket closure by electronic signature once the issue has been resolved.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div id="track" class="mt-5">
+  <div class="p-4 rounded-4 border">
+    <h2 class="h5">Track Ticket</h2>
+    <p class="text-muted mb-2">Enter the tracking link or ticket token:</p>
+
+    <div class="row g-2">
+      <div class="col-md-9">
+        <input class="form-control" id="tokenInput" placeholder="Example: http://localhost:8080/t/AbCdEf... or AbCdEf..." />
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-secondary w-100" type="button" onclick="goTrack()">Open</button>
+      </div>
+    </div>
+
+    <div class="small text-muted mt-2">Tracking page format: <code>/t/&lt;token&gt;</code></div>
+    <hr>
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="fw-semibold">Saved tickets on this device</div>
+      <button class="btn btn-sm btn-outline-secondary" type="button" id="clearSaved">Clear</button>
+    </div>
+    <div id="savedTickets" class="mt-2 small text-muted">No saved tickets are available.</div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = "smart_ticket_tokens";
+
+function readSavedTokens() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    return [];
+  }
+}
+
+function writeSavedTokens(items) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+}
+
+function saveToken(token) {
+  if (!token) return false;
+  const items = readSavedTokens();
+  const now = new Date().toISOString();
+  const existing = items.find((item) => item.token === token);
+  if (existing) {
+    existing.savedAt = now;
+  } else {
+    items.unshift({ token, savedAt: now, ticketId: "" });
+  }
+  if (items.length > 20) items.length = 20;
+  writeSavedTokens(items);
+  return true;
+}
+
+function renderSavedTokens() {
+  const wrap = document.getElementById("savedTickets");
+  if (!wrap) return;
+  const items = readSavedTokens();
+  if (!items.length) {
+    wrap.textContent = "No saved tickets are available.";
+    return;
+  }
+  wrap.innerHTML = items
+    .map((item) => {
+      const token = item.token;
+      const ticketId = item.ticketId;
+      const ticketLabel = ticketId ? `Ticket #${ticketId}` : "Ticket";
+      return `
+        <div class="d-flex justify-content-between align-items-center border rounded p-2 mb-2 bg-white">
+          <div>
+            <div class="fw-semibold">${ticketLabel}</div>
+            <div><code>${token}</code></div>
+            <div class="text-muted small">Saved ${new Date(item.savedAt).toLocaleString()}</div>
+          </div>
+          <a class="btn btn-sm btn-primary" href="/t/${encodeURIComponent(token)}">Open</a>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function extractToken(input) {
+  const v = (input || "").trim();
+  if (!v) return "";
+  try {
+    // If the input is a URL, extract the last path segment.
+    if (v.startsWith("http://") || v.startsWith("https://")) {
+      const u = new URL(v);
+      const parts = u.pathname.split("/").filter(Boolean);
+      if (parts.length >= 2 && parts[0] === "t") return parts[1];
+      return parts[parts.length - 1] || "";
+    }
+  } catch (e) {
+    // Ignore parsing errors and treat the input as a raw token.
+  }
+  return v;
+}
+
+function goTrack() {
+  const raw = document.getElementById("tokenInput").value;
+  const token = extractToken(raw);
+  if (!token) return;
+  saveToken(token);
+  renderSavedTokens();
+  window.location.href = "/t/" + encodeURIComponent(token);
+}
+
+const clearBtn = document.getElementById("clearSaved");
+if (clearBtn) {
+  clearBtn.addEventListener("click", () => {
+    writeSavedTokens([]);
+    renderSavedTokens();
+  });
+}
+
+renderSavedTokens();
+</script>
+{% endblock %}

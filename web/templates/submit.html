@@ -1,0 +1,58 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="p-4 rounded-4 border bg-white">
+      <h1 class="h4 mb-3">Submit a Support Ticket</h1>
+      <form method="post" enctype="multipart/form-data">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Full Name *</label>
+            <input class="form-control" name="requester_name" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Email *</label>
+            <input class="form-control" type="email" name="requester_email" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Phone Number (optional)</label>
+            <input class="form-control" name="requester_phone">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Notification Preference</label>
+            <select class="form-select" name="requester_notification_preference">
+              <option value="BOTH">Email + Telegram</option>
+              <option value="EMAIL">Email only</option>
+              <option value="TELEGRAM">Telegram only</option>
+              <option value="NONE">Do not notify me</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Telegram Chat ID (optional)</label>
+            <input class="form-control" name="requester_telegram_chat_id" placeholder="Example: 123456789">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Supporting Attachment (optional)</label>
+            <input class="form-control" type="file" name="attachment">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Issue Title *</label>
+            <input class="form-control" name="issue_title" required placeholder="Example: Unable to print to Canon imageRUNNER">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Description *</label>
+            <textarea class="form-control" name="description" rows="5" required placeholder="Describe the issue, affected device, location, error messages, and business impact."></textarea>
+          </div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+          <button class="btn btn-primary" type="submit">Submit</button>
+          <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">Cancel</a>
+        </div>
+      </form>
+      <div class="small text-muted mt-3">
+        After submission, you will receive a ticket ID and private tracking link. No sign-in is required to review status updates.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

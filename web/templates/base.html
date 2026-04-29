@@ -1,0 +1,64 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title or "IT Ticket Management System" }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('index') }}">IT Ticket System</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample" aria-controls="navbarsExample" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarsExample">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('submit') }}">Submit Ticket</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}#track">Track Ticket</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('tech_login') }}">Technician</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_login') }}">Admin</a></li>
+          </ul>
+
+          <div class="d-flex">
+            {% if current_user.is_authenticated %}
+              <span class="navbar-text me-3">
+                Signed in: {{ current_user.name }} ({{ current_user.role }})
+              </span>
+              {% if current_user.role == "tech" %}
+                <a class="btn btn-outline-light btn-sm me-2" href="{{ url_for('tech_dashboard') }}">Dashboard</a>
+                <a class="btn btn-outline-warning btn-sm" href="{{ url_for('tech_logout') }}">Logout</a>
+              {% elif current_user.role == "admin" %}
+                <a class="btn btn-outline-light btn-sm me-2" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+                <a class="btn btn-outline-warning btn-sm" href="{{ url_for('admin_logout') }}">Logout</a>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container py-4">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+      <footer class="mt-5 pt-4 border-top text-muted small">
+        Not intended for public deployment without appropriate security hardening.
+      </footer>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

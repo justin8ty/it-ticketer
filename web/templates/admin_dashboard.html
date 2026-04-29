@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Admin Dashboard</h1>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin_technicians') }}">Manage Technicians</a>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="text-muted small">Total tickets</div>
+        <div class="fs-3 fw-semibold">{{ total }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="text-muted small">Open tickets</div>
+        <div class="fs-3 fw-semibold">{{ open_count }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="text-muted small">Technicians</div>
+        <div class="fs-3 fw-semibold">{{ techs|length }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-4 card">
+  <div class="card-body">
+    <h2 class="h6">Recent Tickets</h2>
+    {% if recent %}
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Assigned</th>
+              <th>Override</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in recent %}
+              <tr>
+                <td>#{{ t.id }}</td>
+                <td>{{ t.issue_title }}</td>
+                <td><span class="badge text-bg-secondary">{{ t.status }}</span></td>
+                <td class="text-muted small">
+                  {% if t.assigned_technician %}{{ t.assigned_technician.name }}{% else %}Unassigned{% endif %}
+                </td>
+                <td>
+                  {% if t.closure_override %}
+                    <span class="badge text-bg-warning">Enabled</span>
+                  {% else %}
+                    <form class="d-flex gap-2" method="post" action="{{ url_for('admin_override', ticket_id=t.id) }}">
+                      <input class="form-control form-control-sm" name="reason" placeholder="Reason..." required>
+                      <button class="btn btn-sm btn-outline-warning" type="submit">Override</button>
+                    </form>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_edit_ticket', ticket_id=t.id) }}">Edit</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-muted">No tickets yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

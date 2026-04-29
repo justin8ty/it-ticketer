@@ -1,0 +1,238 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <div class="p-4 rounded-4 border bg-white">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <h1 class="h4 mb-1">Ticket #{{ ticket.id }}</h1>
+          <div class="text-muted">Status: <span class="badge text-bg-secondary">{{ ticket.status }}</span></div>
+        </div>
+        <div class="text-end small text-muted">
+          Created: {{ ticket.created_at.strftime("%Y-%m-%d %H:%M") }} UTC<br>
+          Updated: {{ ticket.updated_at.strftime("%Y-%m-%d %H:%M") }} UTC
+        </div>
+      </div>
+
+      <hr>
+      <div class="mb-3">
+        <div class="text-muted small">Issue Title</div>
+        <div class="fw-semibold">{{ ticket.issue_title }}</div>
+      </div>
+      <div class="mb-3">
+        <div class="text-muted small">Description</div>
+        <div style="white-space: pre-wrap;">{{ ticket.description }}</div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="text-muted small">Category</div>
+          <div class="fw-semibold">{{ ticket.category }}</div>
+        </div>
+        <div class="col-md-4">
+          <div class="text-muted small">Priority</div>
+          <div class="fw-semibold">{{ ticket.priority }}</div>
+        </div>
+        <div class="col-md-4">
+          <div class="text-muted small">Assigned Technician</div>
+          <div class="fw-semibold">
+            {% if ticket.assigned_technician %}{{ ticket.assigned_technician.name }}{% else %}Unassigned{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <hr>
+      <h2 class="h6">Public Updates</h2>
+      {% if public_msgs %}
+        <div class="list-group mb-3">
+          {% for m in public_msgs %}
+            <div class="list-group-item">
+              <div class="d-flex justify-content-between">
+                <div class="fw-semibold">{{ m.author_role }}</div>
+                <div class="text-muted small">{{ m.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</div>
+              </div>
+              <div style="white-space: pre-wrap;">{{ m.content }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-muted small mb-3">No messages yet.</div>
+      {% endif %}
+
+      <hr>
+      <h2 class="h6">Attachments</h2>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="fw-semibold small mb-1">Submitted Attachments</div>
+          {% if issue_files %}
+            <ul class="list-unstyled mb-0">
+              {% for a in issue_files %}
+                <li>
+                  <a href="{{ url_for('download_attachment', attachment_id=a.id) }}">{{ a.filename }}</a>
+                  <span class="text-muted small"> (SHA-256: {{ a.sha256[:10] }}...)</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-muted small">None</div>
+          {% endif %}
+        </div>
+        <div class="col-md-6">
+          <div class="fw-semibold small mb-1">Proof of Resolution</div>
+          {% if proof_files %}
+            <ul class="list-unstyled mb-0">
+              {% for a in proof_files %}
+                <li>
+                  <a href="{{ url_for('download_attachment', attachment_id=a.id) }}">{{ a.filename }}</a>
+                  <span class="text-muted small"> (SHA-256: {{ a.sha256[:10] }}...)</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-muted small">Not uploaded yet</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <hr>
+      <h2 class="h6">Verification Checklist</h2>
+      {% if health %}
+        <div class="small text-muted">
+          Latest result: <span class="badge text-bg-success">{{ health.result }}</span>
+          ({{ health.created_at.strftime("%Y-%m-%d %H:%M") }} UTC)
+        </div>
+        {% if health_display and (health_display.type == "qa" or health_display.type == "kv" or health_display.type == "list") %}
+          <div class="list-group mt-2">
+            {% for item in health_display.questions %}
+              <div class="list-group-item">
+                <div class="fw-semibold small">{{ item.question }}</div>
+                <div class="small text-muted">{{ item.answer or "No response recorded" }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% elif health_display and health_display.type == "raw" %}
+          <pre class="p-3 bg-light border rounded small mb-0">{{ health_display.raw }}</pre>
+        {% endif %}
+      {% else %}
+        <div class="text-muted small">No health check recorded yet.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="p-4 rounded-4 border bg-body-tertiary">
+      <h2 class="h6">Closure Confirmation</h2>
+
+      {% if ticket.status == "CLOSED" %}
+        <div class="alert alert-success mb-0">This ticket has been closed.</div>
+      {% elif closure and closure.status == "CONFIRMED" %}
+        <div class="alert alert-success">
+          Confirmed at {{ closure.confirmed_at.strftime("%Y-%m-%d %H:%M") }} UTC.
+        </div>
+      {% elif closure and closure.status == "PENDING" %}
+        <p class="text-muted small mb-2">
+          A closure confirmation has been requested. Please sign below to confirm resolution.
+        </p>
+        <form method="post">
+          <input type="hidden" name="action" value="confirm_esign">
+          <label class="form-label small">Electronic signature</label>
+          <div class="border rounded bg-white">
+            <canvas id="signaturePad" class="w-100" height="160" style="touch-action: none;"></canvas>
+          </div>
+          <input type="hidden" name="signature_data" id="signatureData">
+          <div class="d-flex gap-2 mt-2">
+            <button class="btn btn-outline-secondary btn-sm" type="button" id="clearSignature">Clear</button>
+            <button class="btn btn-primary btn-sm" type="submit">Confirm Closure</button>
+          </div>
+        </form>
+      {% else %}
+        <p class="text-muted small mb-0">
+          Closure confirmation has not yet been requested.
+        </p>
+      {% endif %}
+
+      <hr>
+      <div class="small text-muted">
+        Tracking token: <code>{{ ticket.tracking_token }}</code>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const signaturePad = document.getElementById("signaturePad");
+if (signaturePad) {
+  const ctx = signaturePad.getContext("2d");
+  let isDrawing = false;
+  let hasDrawing = false;
+
+  function resizeSignaturePad() {
+    signaturePad.width = signaturePad.offsetWidth;
+    signaturePad.height = signaturePad.offsetHeight;
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#111";
+  }
+
+  function getPoint(event) {
+    const rect = signaturePad.getBoundingClientRect();
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
+  }
+
+  function startDraw(event) {
+    isDrawing = true;
+    hasDrawing = true;
+    const point = getPoint(event);
+    ctx.beginPath();
+    ctx.moveTo(point.x, point.y);
+    ctx.lineTo(point.x, point.y);
+    ctx.stroke();
+    signaturePad.setPointerCapture(event.pointerId);
+  }
+
+  function moveDraw(event) {
+    if (!isDrawing) return;
+    const point = getPoint(event);
+    ctx.lineTo(point.x, point.y);
+    ctx.stroke();
+  }
+
+  function endDraw() {
+    isDrawing = false;
+  }
+
+  signaturePad.addEventListener("pointerdown", startDraw);
+  signaturePad.addEventListener("pointermove", moveDraw);
+  signaturePad.addEventListener("pointerup", endDraw);
+  signaturePad.addEventListener("pointerleave", endDraw);
+
+  resizeSignaturePad();
+  window.addEventListener("resize", resizeSignaturePad);
+
+  const clearBtn = document.getElementById("clearSignature");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      ctx.clearRect(0, 0, signaturePad.width, signaturePad.height);
+      hasDrawing = false;
+      const dataField = document.getElementById("signatureData");
+      if (dataField) dataField.value = "";
+    });
+  }
+
+  const form = signaturePad.closest("form");
+  if (form) {
+    form.addEventListener("submit", () => {
+      const dataField = document.getElementById("signatureData");
+      if (!dataField) return;
+      if (!hasDrawing) {
+        dataField.value = "";
+        return;
+      }
+      dataField.value = signaturePad.toDataURL("image/png");
+    });
+  }
+}
+</script>
+{% endblock %}

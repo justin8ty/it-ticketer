@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Edit Ticket #{{ ticket.id }}</h1>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin_dashboard') }}">Back</a>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="post" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Requester Name</label>
+        <input class="form-control" name="requester_name" value="{{ ticket.requester_name }}" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Requester Email</label>
+        <input class="form-control" type="email" name="requester_email" value="{{ ticket.requester_email }}" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Requester Phone</label>
+        <input class="form-control" name="requester_phone" value="{{ ticket.requester_phone or '' }}">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Requester Telegram Chat ID</label>
+        <input class="form-control" name="requester_telegram_chat_id" value="{{ ticket.requester_telegram_chat_id or '' }}">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Requester Notification Preference</label>
+        <select class="form-select" name="requester_notification_preference">
+          {% for preference in notification_preferences %}
+            <option value="{{ preference }}" {% if ticket.requester_notification_preference == preference %}selected{% endif %}>
+              {{ preference }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Assigned Technician</label>
+        <select class="form-select" name="assigned_technician_id">
+          <option value="">Unassigned</option>
+          {% for t in techs %}
+            <option value="{{ t.id }}" {% if ticket.assigned_technician_id==t.id %}selected{% endif %}>
+              {{ t.name }} ({{ t.skill_group }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Category</label>
+        <select class="form-select" name="category">
+          {% for c in categories %}
+            <option value="{{ c }}" {% if ticket.category==c %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Priority</label>
+        <select class="form-select" name="priority">
+          {% for p in priorities %}
+            <option value="{{ p }}" {% if ticket.priority==p %}selected{% endif %}>{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Status</label>
+        <select class="form-select" name="status">
+          {% for s in status_options %}
+            <option value="{{ s }}" {% if ticket.status==s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Issue Title</label>
+        <input class="form-control" name="issue_title" value="{{ ticket.issue_title }}" required>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" name="description" rows="5" required>{{ ticket.description }}</textarea>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-primary" type="submit">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,202 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h1 class="h4 mb-1">Ticket #{{ ticket.id }} - Technician View</h1>
+    <div class="text-muted">Requester: {{ ticket.requester_name }} ({{ ticket.requester_email }})</div>
+    <div class="text-muted small">Tracking: <a href="{{ url_for('track', token=ticket.tracking_token) }}" target="_blank">/t/{{ ticket.tracking_token }}</a></div>
+  </div>
+  <div class="text-end">
+    <div class="badge text-bg-secondary fs-6">{{ ticket.status }}</div>
+    <div class="text-muted small">Priority: {{ ticket.priority }} | Category: {{ ticket.category }}</div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="p-4 rounded-4 border bg-white">
+      <h2 class="h6">Issue</h2>
+      <div class="fw-semibold">{{ ticket.issue_title }}</div>
+      <div class="mt-2" style="white-space: pre-wrap;">{{ ticket.description }}</div>
+
+      {% if ticket.ai_summary or ticket.ai_solution_suggestion %}
+      <hr>
+      <h2 class="h6">Initial Assessment</h2>
+      {% if ticket.ai_summary %}
+        <div class="text-muted small">Issue Summary</div>
+        <div class="p-3 bg-light border rounded">{{ ticket.ai_summary }}</div>
+      {% endif %}
+      {% if ticket.ai_solution_suggestion %}
+        <div class="text-muted small mt-3">Recommended Resolution</div>
+        <pre class="p-3 bg-light border rounded small mb-0">{{ ticket.ai_solution_suggestion }}</pre>
+      {% endif %}
+      {% endif %}
+    </div>
+
+    <div class="p-4 rounded-4 border bg-white mt-3">
+      <h2 class="h6">Messages</h2>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="fw-semibold small mb-2">Public</div>
+          {% if public_msgs %}
+            <div class="list-group">
+              {% for m in public_msgs %}
+                <div class="list-group-item">
+                  <div class="d-flex justify-content-between">
+                    <div class="fw-semibold">{{ m.author_role }}</div>
+                    <div class="text-muted small">{{ m.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</div>
+                  </div>
+                  <div style="white-space: pre-wrap;">{{ m.content }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-muted small">None</div>
+          {% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <div class="fw-semibold small mb-2">Internal</div>
+          {% if internal_msgs %}
+            <div class="list-group">
+              {% for m in internal_msgs %}
+                <div class="list-group-item">
+                  <div class="d-flex justify-content-between">
+                    <div class="fw-semibold">{{ m.author_role }}</div>
+                    <div class="text-muted small">{{ m.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</div>
+                  </div>
+                  <div style="white-space: pre-wrap;">{{ m.content }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-muted small">None</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <hr>
+      <form method="post">
+        <input type="hidden" name="action" value="add_message">
+        <div class="row g-2">
+          <div class="col-md-3">
+            <select class="form-select" name="message_type">
+              <option value="Public">Public</option>
+              <option value="Internal">Internal</option>
+            </select>
+          </div>
+          <div class="col-md-9">
+            <input class="form-control" name="content" placeholder="Type message / update..." required>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm mt-2" type="submit">Post</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="p-4 rounded-4 border bg-body-tertiary">
+      <h2 class="h6">Actions</h2>
+
+      <form method="post" class="mb-3">
+        <input type="hidden" name="action" value="update_status">
+        <label class="form-label small">Update status</label>
+        <select class="form-select" name="status">
+          {% for s in status_options %}
+            <option value="{{ s }}" {% if ticket.status==s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn btn-secondary btn-sm mt-2 w-100" type="submit">Apply</button>
+        <div class="small text-muted mt-2">
+          Closing requires proof of resolution, a PASS verification result or administrative override, and requester confirmation by electronic signature.
+        </div>
+      </form>
+
+      <hr>
+      <h2 class="h6">Upload</h2>
+      <form method="post" enctype="multipart/form-data" class="mb-3">
+        <input type="hidden" name="action" value="upload_attachment">
+        <label class="form-label small">Attachment type</label>
+        <select class="form-select" name="attachment_type">
+          <option value="Issue">Issue</option>
+          <option value="Proof-of-Fix">Proof of Resolution</option>
+        </select>
+        <input class="form-control mt-2" type="file" name="file" required>
+        <button class="btn btn-dark btn-sm mt-2 w-100" type="submit">Upload</button>
+      </form>
+
+      <div class="small">
+        <div class="fw-semibold">Issue files</div>
+        {% if issue_files %}
+          <ul class="mb-2">
+          {% for a in issue_files %}
+            <li><a href="{{ url_for('download_attachment', attachment_id=a.id) }}">{{ a.filename }}</a></li>
+          {% endfor %}
+          </ul>
+        {% else %}<div class="text-muted">None</div>{% endif %}
+
+        <div class="fw-semibold mt-2">Proof of Resolution</div>
+        {% if proof_files %}
+          <ul class="mb-0">
+          {% for a in proof_files %}
+            <li><a href="{{ url_for('download_attachment', attachment_id=a.id) }}">{{ a.filename }}</a></li>
+          {% endfor %}
+          </ul>
+        {% else %}<div class="text-muted">None</div>{% endif %}
+      </div>
+
+      <hr>
+      <h2 class="h6">Verification Checklist</h2>
+      <form method="post" class="mb-2">
+        <input type="hidden" name="action" value="health_check">
+        <input type="hidden" name="questions_json" value="{{ health_questions_json }}">
+        {% for q in health_questions %}
+          <div class="mb-2">
+            <label class="form-label small">{{ q }}</label>
+            <textarea class="form-control" name="answer_{{ loop.index0 }}" rows="2" required></textarea>
+          </div>
+        {% endfor %}
+        <div class="mt-2">
+          <label class="form-label small">Result</label>
+          <select class="form-select" name="result">
+            <option value="PASS">PASS</option>
+            <option value="FAIL">FAIL</option>
+          </select>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm mt-2 w-100" type="submit">Save Health Check</button>
+      </form>
+
+      {% if health %}
+        <div class="alert alert-light border small mb-0">
+          Latest: <span class="badge text-bg-success">{{ health.result }}</span><br>
+          <span class="text-muted">{{ health.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</span>
+        </div>
+      {% endif %}
+
+      <hr>
+      <h2 class="h6">Closure Confirmation</h2>
+
+      {% if closure and closure.status == "PENDING" %}
+        <div class="alert alert-warning small">
+          Closure confirmation has been requested and is awaiting requester signature.
+        </div>
+      {% elif closure and closure.status == "CONFIRMED" %}
+        <div class="alert alert-success small">
+          Confirmed at {{ closure.confirmed_at.strftime("%Y-%m-%d %H:%M") }} UTC.
+        </div>
+      {% else %}
+        <div class="text-muted small">
+          Request confirmation after proof of resolution and a PASS verification result, or after an administrative override. The requester signs on the tracking page.
+        </div>
+      {% endif %}
+
+      <form method="post" class="mt-2">
+        <input type="hidden" name="action" value="request_esign">
+        <button class="btn btn-primary btn-sm w-100" type="submit">Request Electronic Signature</button>
+      </form>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

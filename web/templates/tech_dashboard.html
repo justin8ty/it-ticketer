@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Technician Dashboard</h1>
+  <div class="text-muted small">Assigned to: {{ current_user.name }}</div>
+</div>
+
+<div class="p-3 rounded-4 border bg-white mb-3">
+  <form class="row g-2">
+    <div class="col-md-3">
+      <select class="form-select" name="status">
+        <option value="">All statuses</option>
+        {% for s in status_options %}
+          <option value="{{ s }}" {% if status==s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6">
+      <input class="form-control" name="q" value="{{ q }}" placeholder="Search by title or requester email">
+    </div>
+    <div class="col-md-3">
+      <button class="btn btn-secondary w-100" type="submit">Filter</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    {% if tickets %}
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Updated</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in tickets %}
+              <tr>
+                <td>#{{ t.id }}</td>
+                <td>{{ t.issue_title }}</td>
+                <td><span class="badge text-bg-light">{{ t.priority }}</span></td>
+                <td><span class="badge text-bg-secondary">{{ t.status }}</span></td>
+                <td class="text-muted small">{{ t.updated_at.strftime("%Y-%m-%d %H:%M") }} UTC</td>
+                <td class="text-end">
+                  <a class="btn btn-sm btn-primary" href="{{ url_for('tech_ticket', ticket_id=t.id) }}">Open</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-muted">No tickets found.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
