@@ -10,29 +10,44 @@
   <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
       <div class="container">
-        <a class="navbar-brand" href="{{ url_for('index') }}">IT Ticket System</a>
+        {% set is_tech = current_user.is_authenticated and current_user.role == "tech" %}
+        {% set is_admin = current_user.is_authenticated and current_user.role == "admin" %}
+        <a class="navbar-brand" href="{% if is_tech %}{{ url_for('tech_dashboard') }}{% elif is_admin %}{{ url_for('admin_dashboard') }}{% else %}{{ url_for('index') }}{% endif %}">
+          {% if is_tech %}
+            Technician Workspace
+          {% elif is_admin %}
+            Admin Console
+          {% else %}
+            IT Ticket System
+          {% endif %}
+        </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample" aria-controls="navbarsExample" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
 
         <div class="collapse navbar-collapse" id="navbarsExample">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('submit') }}">Submit Ticket</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}#track">Track Ticket</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('tech_login') }}">Technician</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_login') }}">Admin</a></li>
+            {% if is_tech %}
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('tech_dashboard') }}">Workspace</a></li>
+            {% elif is_admin %}
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_technicians') }}">Manage Technicians</a></li>
+            {% else %}
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('submit') }}">Submit Ticket</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}#track">Track Ticket</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('tech_login') }}">Technician</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_login') }}">Admin</a></li>
+            {% endif %}
           </ul>
 
-          <div class="d-flex">
+          <div class="d-flex align-items-center gap-2">
             {% if current_user.is_authenticated %}
-              <span class="navbar-text me-3">
-                Signed in: {{ current_user.name }} ({{ current_user.role }})
+              <span class="navbar-text">
+                {{ current_user.name }}
               </span>
-              {% if current_user.role == "tech" %}
-                <a class="btn btn-outline-light btn-sm me-2" href="{{ url_for('tech_dashboard') }}">Dashboard</a>
+              {% if is_tech %}
                 <a class="btn btn-outline-warning btn-sm" href="{{ url_for('tech_logout') }}">Logout</a>
-              {% elif current_user.role == "admin" %}
-                <a class="btn btn-outline-light btn-sm me-2" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+              {% elif is_admin %}
                 <a class="btn btn-outline-warning btn-sm" href="{{ url_for('admin_logout') }}">Logout</a>
               {% endif %}
             {% endif %}
