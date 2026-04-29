@@ -1,3 +1,6 @@
+from collections import Counter
+from datetime import timedelta
+
 from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -62,16 +65,94 @@ def register_admin_routes(app):
     def admin_dashboard():
         db = SessionLocal()
         try:
-            total = db.query(Ticket).count()
-            closed_status = db.query(Status).filter(Status.name == "CLOSED").first()
-            if closed_status:
-                open_count = db.query(Ticket).filter(Ticket.status_id != closed_status.id).count()
-            else:
-                open_count = total
+            tickets = db.query(Ticket).order_by(Ticket.updated_at.desc()).all()
             techs = db.query(Technician).order_by(Technician.skill_group, Technician.name).all()
-            recent = db.query(Ticket).order_by(Ticket.created_at.desc()).limit(10).all()
+            status_options = list_status_names(db)
+            priority_options = list_priority_names(db)
+            category_options = list_category_names(db)
+
+            total = len(tickets)
+            closed_status = db.query(Status).filter(Status.name == "CLOSED").first()
+            closed_status_id = closed_status.id if closed_status else None
+            open_tickets = [t for t in tickets if not closed_status_id or t.status_id != closed_status_id]
+            open_count = len(open_tickets)
+            closed_count = total - open_count if closed_status_id else 0
+            unassigned_tickets = [t for t in open_tickets if not t.assigned_technician_id]
+            pending_confirmation_tickets = [t for t in open_tickets if t.status == "PENDING_CONFIRMATION"]
+            override_tickets = [t for t in open_tickets if t.closure_override]
+            high_priority_tickets = [t for t in open_tickets if (t.priority or "").upper() in {"HIGH", "URGENT"}]
+            stale_cutoff = now_utc() - timedelta(days=3)
+            stale_tickets = [t for t in open_tickets if t.updated_at and t.updated_at < stale_cutoff]
+
+            status_counts_raw = Counter((t.status or "Unknown") for t in tickets)
+            priority_counts_raw = Counter((t.priority or "Unknown") for t in tickets)
+            category_counts_raw = Counter((t.category or "Unknown") for t in tickets)
+
+            status_breakdown = [
+                {"label": name, "count": status_counts_raw.get(name, 0)} for name in status_options if status_counts_raw.get(name, 0)
+            ]
+            priority_breakdown = [
+                {"label": name, "count": priority_counts_raw.get(name, 0)}
+                for name in priority_options
+                if priority_counts_raw.get(name, 0)
+            ]
+            category_breakdown = [
+                {"label": name, "count": category_counts_raw.get(name, 0)}
+                for name in category_options
+                if category_counts_raw.get(name, 0)
+            ]
+            category_breakdown.sort(key=lambda item: (-item["count"], item["label"]))
+
+            technician_workload = []
+            active_technicians = 0
+            for tech in techs:
+                if tech.is_active:
+                    active_technicians += 1
+                assigned_open = [t for t in open_tickets if t.assigned_technician_id == tech.id]
+                technician_workload.append(
+                    {
+                        "tech": tech,
+                        "open_count": len(assigned_open),
+                        "high_priority_count": sum(
+                            1 for t in assigned_open if (t.priority or "").upper() in {"HIGH", "URGENT"}
+                        ),
+                        "pending_confirmation_count": sum(1 for t in assigned_open if t.status == "PENDING_CONFIRMATION"),
+                        "latest_update": max((t.updated_at for t in assigned_open), default=None),
+                    }
+                )
+            technician_workload.sort(
+                key=lambda item: (-item["open_count"], -item["high_priority_count"], item["tech"].name.lower())
+            )
+
+            recent = sorted(tickets, key=lambda t: t.created_at, reverse=True)[:10]
+            recent_unassigned = sorted(unassigned_tickets, key=lambda t: t.created_at, reverse=True)[:8]
+            recent_high_priority = sorted(high_priority_tickets, key=lambda t: t.updated_at, reverse=True)[:8]
+            recent_pending_confirmation = sorted(
+                pending_confirmation_tickets, key=lambda t: t.updated_at, reverse=True
+            )[:8]
+            recent_stale = sorted(stale_tickets, key=lambda t: t.updated_at)[:8]
+
             return render_template(
-                "admin_dashboard.html", total=total, open_count=open_count, techs=techs, recent=recent
+                "admin_dashboard.html",
+                total=total,
+                open_count=open_count,
+                closed_count=closed_count,
+                active_technicians=active_technicians,
+                techs=techs,
+                unassigned_count=len(unassigned_tickets),
+                pending_confirmation_count=len(pending_confirmation_tickets),
+                override_count=len(override_tickets),
+                high_priority_count=len(high_priority_tickets),
+                stale_count=len(stale_tickets),
+                status_breakdown=status_breakdown,
+                priority_breakdown=priority_breakdown,
+                category_breakdown=category_breakdown,
+                technician_workload=technician_workload,
+                recent_unassigned=recent_unassigned,
+                recent_high_priority=recent_high_priority,
+                recent_pending_confirmation=recent_pending_confirmation,
+                recent_stale=recent_stale,
+                recent=recent,
             )
         finally:
             db.close()

@@ -67,3 +67,17 @@ pre { white-space: pre-wrap; }
     position: static;
   }
 }
+
+.admin-metric-card {
+  border-radius: 1rem;
+}
+
+.admin-metric-card.metric-alert {
+  border-color: #f0ad4e;
+  background: #fffaf1;
+}
+
+.admin-metric-card.metric-warning {
+  border-color: #dc3545;
+  background: #fff5f5;
+}
