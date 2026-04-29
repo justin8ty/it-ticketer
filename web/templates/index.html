@@ -1,59 +1,136 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block content %}
-<div class="row g-4">
-  <div class="col-lg-6">
-    <div class="p-4 rounded-4 bg-body-tertiary border">
-      <h1 class="h3 mb-2">IT Ticket Management System</h1>
-      <p class="text-muted mb-3">
-        Submit support requests and monitor progress through a private tracking link.
-      </p>
-      <div class="d-flex gap-2 flex-wrap">
-        <a class="btn btn-primary" href="{{ url_for('submit') }}">Submit a Ticket</a>
-        <a class="btn btn-outline-secondary" href="#track">Track a Ticket</a>
-        <a class="btn btn-outline-dark" href="{{ url_for('tech_login') }}">Technician Login</a>
-        <a class="btn btn-outline-dark" href="{{ url_for('admin_login') }}">Admin Login</a>
+<section class="home-hero mb-4">
+  <div class="home-hero-panel">
+    <div class="row g-4 align-items-stretch">
+      <div class="col-lg-7">
+        <div class="home-copy h-100 d-flex flex-column justify-content-between">
+          <div>
+            <div class="home-eyebrow">IT support service desk</div>
+            <h1 class="home-title">Get Support from Experienced Technicians</h1>
+            <p class="home-lead">
+              Report an issue, receive a private tracking link, and follow technician updates until the case is resolved.
+            </p>
+          </div>
+
+          <div class="home-quick-stats" aria-label="Service desk highlights">
+            <div class="home-stat">
+              <div class="home-stat-value">2 steps</div>
+              <div class="home-stat-label">Submit and receive your tracking link</div>
+            </div>
+            <div class="home-stat">
+              <div class="home-stat-value">No sign-in</div>
+              <div class="home-stat-label">Track progress from any device</div>
+            </div>
+            <div class="home-stat">
+              <div class="home-stat-value">Clear updates</div>
+              <div class="home-stat-label">See replies, attachments, and closure requests</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="home-action-stack">
+          <a class="home-action-card home-action-primary text-decoration-none" href="{{ url_for('submit') }}">
+            <div>
+              <div class="home-action-kicker">Primary action</div>
+              <h2 class="h4 mb-2 text-dark">Submit a ticket</h2>
+              <p class="text-muted mb-0">Describe the issue, attach supporting files, and get a private tracking link immediately.</p>
+            </div>
+            <span class="btn btn-primary home-action-button">Open form</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="track" class="mb-4">
+  <div class="home-track-panel">
+    <div class="row g-4 align-items-start">
+      <div class="col-lg-4">
+        <div class="home-section-intro">
+          <div class="home-eyebrow">Tracking</div>
+          <h2 class="h3 mb-2">Open your ticket in one step</h2>
+          <p class="text-muted mb-0">
+            Paste the full tracking link or just the private token. Your ticket page will show status, public replies, proof of resolution, and confirmation requests.
+          </p>
+        </div>
+      </div>
+      <div class="col-lg-8">
+        <div class="home-track-workspace">
+          <label class="form-label fw-semibold" for="tokenInput">Tracking link or token</label>
+          <div class="row g-2">
+            <div class="col-md-9">
+              <input class="form-control form-control-lg" id="tokenInput" placeholder="Example: http://localhost:8080/t/AbCdEf... or AbCdEf..." />
+            </div>
+            <div class="col-md-3">
+              <button class="btn btn-dark btn-lg w-100" type="button" onclick="goTrack()">Open</button>
+            </div>
+          </div>
+
+          <div class="small text-muted mt-2">Tracking page format: <code>/t/&lt;token&gt;</code></div>
+
+          <div class="home-saved-panel mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-2 gap-2 flex-wrap">
+              <div>
+                <div class="fw-semibold">Saved tickets on this device</div>
+                <div class="small text-muted">Helpful if you reopen the same ticket later.</div>
+              </div>
+              <button class="btn btn-sm btn-outline-secondary" type="button" id="clearSaved">Clear</button>
+            </div>
+            <div id="savedTickets" class="small text-muted">No saved tickets are available.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="home-process-panel h-100">
+      <div class="home-eyebrow">How it works</div>
+      <h2 class="h4 mb-3">A simple support flow for requesters</h2>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="home-step">
+            <div class="home-step-number">01</div>
+            <h3 class="h6">Submit the issue</h3>
+            <p class="text-muted small mb-0">Provide your details, describe the issue clearly, and add an attachment if needed.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="home-step">
+            <div class="home-step-number">02</div>
+            <h3 class="h6">Receive your tracking link</h3>
+            <p class="text-muted small mb-0">The system gives you a ticket ID and a private link to revisit progress anytime.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="home-step">
+            <div class="home-step-number">03</div>
+            <h3 class="h6">Follow updates and confirm closure</h3>
+            <p class="text-muted small mb-0">Review technician updates, proof of resolution, and sign once the issue is resolved.</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="col-lg-6">
-    <div class="p-4 rounded-4 border">
-      <h2 class="h5">Welcome to the IT Ticket Management System</h2>
-      <div class="mt-2">The following services are available to requesters:</div>
-      <ul class="mt-2 mb-0">
-        <li>Submit a support ticket by providing the issue details and any relevant attachment.</li>
-        <li>Receive a ticket ID and private tracking link immediately after submission.</li>
-        <li>Review ticket status at any time through the tracking link without signing in.</li>
-        <li>View technician updates and public responses on the tracking page.</li>
-        <li>Confirm ticket closure by electronic signature once the issue has been resolved.</li>
-      </ul>
-    </div>
-  </div>
-</div>
-
-<div id="track" class="mt-5">
-  <div class="p-4 rounded-4 border">
-    <h2 class="h5">Track Ticket</h2>
-    <p class="text-muted mb-2">Enter the tracking link or ticket token:</p>
-
-    <div class="row g-2">
-      <div class="col-md-9">
-        <input class="form-control" id="tokenInput" placeholder="Example: http://localhost:8080/t/AbCdEf... or AbCdEf..." />
-      </div>
-      <div class="col-md-3">
-        <button class="btn btn-secondary w-100" type="button" onclick="goTrack()">Open</button>
+  <div class="col-lg-4">
+    <div class="home-staff-panel h-100">
+      <div class="home-eyebrow">Staff access</div>
+      <h2 class="h5 mb-2">For technicians and administrators</h2>
+      <p class="text-muted small mb-3">Operational access is kept separate from the requester journey.</p>
+      <div class="d-grid gap-2">
+        <a class="btn btn-outline-dark" href="{{ url_for('tech_login') }}">Technician login</a>
+        <a class="btn btn-outline-secondary" href="{{ url_for('admin_login') }}">Admin login</a>
       </div>
     </div>
-
-    <div class="small text-muted mt-2">Tracking page format: <code>/t/&lt;token&gt;</code></div>
-    <hr>
-    <div class="d-flex justify-content-between align-items-center">
-      <div class="fw-semibold">Saved tickets on this device</div>
-      <button class="btn btn-sm btn-outline-secondary" type="button" id="clearSaved">Clear</button>
-    </div>
-    <div id="savedTickets" class="mt-2 small text-muted">No saved tickets are available.</div>
   </div>
-</div>
+</section>
 
 <script>
 const STORAGE_KEY = "smart_ticket_tokens";
@@ -102,7 +179,7 @@ function renderSavedTokens() {
       const ticketId = item.ticketId;
       const ticketLabel = ticketId ? `Ticket #${ticketId}` : "Ticket";
       return `
-        <div class="d-flex justify-content-between align-items-center border rounded p-2 mb-2 bg-white">
+        <div class="home-saved-ticket">
           <div>
             <div class="fw-semibold">${ticketLabel}</div>
             <div><code>${token}</code></div>
@@ -119,7 +196,6 @@ function extractToken(input) {
   const v = (input || "").trim();
   if (!v) return "";
   try {
-    // If the input is a URL, extract the last path segment.
     if (v.startsWith("http://") || v.startsWith("https://")) {
       const u = new URL(v);
       const parts = u.pathname.split("/").filter(Boolean);
@@ -127,7 +203,6 @@ function extractToken(input) {
       return parts[parts.length - 1] || "";
     }
   } catch (e) {
-    // Ignore parsing errors and treat the input as a raw token.
   }
   return v;
 }
