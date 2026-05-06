@@ -7,10 +7,39 @@
     <h1 class="h3 mb-1">Ticket Queue and Workspace</h1>
     <p class="text-muted mb-0">Assigned to {{ current_user.name }}. Select a ticket, update the conversation, and complete closure verification.</p>
   </div>
-  {% if selected_ticket %}
-    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('track', token=selected_ticket.tracking_token) }}" target="_blank">Open Requester View</a>
-  {% endif %}
+  <div class="d-flex gap-2 flex-wrap justify-content-end">
+    <span class="status-chip info">{{ tech_alert_counts.assigned }} assigned</span>
+    <span class="status-chip danger">{{ tech_alert_counts.high_priority }} high priority</span>
+    <span class="status-chip warning">{{ tech_alert_counts.pending_confirmation }} pending confirmation</span>
+    <span class="status-chip danger">{{ tech_alert_counts.reopened }} reopened</span>
+    <span class="status-chip">{{ current_user.name }}</span>
+    {% if selected_ticket %}
+      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('track', token=selected_ticket.tracking_token) }}" target="_blank">Open Requester View</a>
+    {% endif %}
+  </div>
 </div>
+
+<form class="panel mb-3" method="get" action="{{ url_for('tech_dashboard') }}">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-5">
+      <label class="form-label small fw-semibold">Workspace search</label>
+      <input class="form-control" name="q" value="{{ q }}" placeholder="Search by title or requester email">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small fw-semibold">Status</label>
+      <select class="form-select" name="status">
+        <option value="">All statuses</option>
+        {% for s in status_options %}
+          <option value="{{ s }}" {% if status==s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% if selected_ticket %}<input type="hidden" name="ticket_id" value="{{ selected_ticket.id }}">{% endif %}
+    <div class="col-md-3">
+      <button class="btn btn-primary w-100" type="submit">Search Queue</button>
+    </div>
+  </div>
+</form>
 
 <div class="d-lg-none mb-3">
   <button class="btn btn-outline-secondary w-100" type="button" data-bs-toggle="offcanvas" data-bs-target="#techQueuePanel" aria-controls="techQueuePanel">

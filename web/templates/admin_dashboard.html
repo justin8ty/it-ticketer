@@ -50,57 +50,65 @@
 </div>
 
 <div class="row g-3 mb-4">
-  <div class="col-lg-4">
+  <div class="col-lg-3">
     <div class="panel h-100">
       <h2 class="h6 mb-3">Tickets by Status</h2>
       {% if status_breakdown %}
-        <div class="list-group list-group-flush small">
+        <div class="chart-list">
           {% for item in status_breakdown %}
-            <div class="list-group-item px-0 d-flex justify-content-between align-items-center bg-transparent">
-              <span>{{ item.label }}</span>
-              <span class="status-chip primary">{{ item.count }}</span>
+            <div class="chart-row">
+              <div class="d-flex justify-content-between small"><span>{{ item.label|replace("_", " ")|title }}</span><strong>{{ item.count }}</strong></div>
+              <div class="chart-track"><div class="chart-bar primary" style="width: {{ (item.count / chart_max_count * 100)|round(0, 'floor') }}%"></div></div>
             </div>
           {% endfor %}
         </div>
-      {% else %}
-        <div class="text-muted small">No status data available.</div>
-      {% endif %}
+      {% else %}<div class="text-muted small">No status data available.</div>{% endif %}
     </div>
   </div>
 
-  <div class="col-lg-4">
+  <div class="col-lg-3">
     <div class="panel h-100">
       <h2 class="h6 mb-3">Tickets by Priority</h2>
       {% if priority_breakdown %}
-        <div class="list-group list-group-flush small">
+        <div class="chart-list">
           {% for item in priority_breakdown %}
-            <div class="list-group-item px-0 d-flex justify-content-between align-items-center bg-transparent">
-              <span>{{ item.label }}</span>
-              <span class="status-chip">{{ item.count }}</span>
+            <div class="chart-row">
+              <div class="d-flex justify-content-between small"><span>{{ item.label }}</span><strong>{{ item.count }}</strong></div>
+              <div class="chart-track"><div class="chart-bar warning" style="width: {{ (item.count / chart_max_count * 100)|round(0, 'floor') }}%"></div></div>
             </div>
           {% endfor %}
         </div>
-      {% else %}
-        <div class="text-muted small">No priority data available.</div>
-      {% endif %}
+      {% else %}<div class="text-muted small">No priority data available.</div>{% endif %}
     </div>
   </div>
 
-  <div class="col-lg-4">
+  <div class="col-lg-3">
     <div class="panel h-100">
       <h2 class="h6 mb-3">Tickets by Category</h2>
       {% if category_breakdown %}
-        <div class="list-group list-group-flush small">
+        <div class="chart-list">
           {% for item in category_breakdown %}
-            <div class="list-group-item px-0 d-flex justify-content-between align-items-center bg-transparent">
-              <span>{{ item.label }}</span>
-              <span class="status-chip">{{ item.count }}</span>
+            <div class="chart-row">
+              <div class="d-flex justify-content-between small"><span>{{ item.label }}</span><strong>{{ item.count }}</strong></div>
+              <div class="chart-track"><div class="chart-bar info" style="width: {{ (item.count / chart_max_count * 100)|round(0, 'floor') }}%"></div></div>
             </div>
           {% endfor %}
         </div>
-      {% else %}
-        <div class="text-muted small">No category data available.</div>
-      {% endif %}
+      {% else %}<div class="text-muted small">No category data available.</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-3">
+    <div class="panel h-100">
+      <h2 class="h6 mb-3">Unresolved Work</h2>
+      <div class="chart-list">
+        {% for item in unresolved_metrics %}
+          <div class="chart-row">
+            <div class="d-flex justify-content-between small"><span>{{ item.label }}</span><strong>{{ item.count }}</strong></div>
+            <div class="chart-track"><div class="chart-bar {{ item.tone }}" style="width: {{ (item.count / chart_max_count * 100)|round(0, 'floor') }}%"></div></div>
+          </div>
+        {% endfor %}
+      </div>
     </div>
   </div>
 </div>

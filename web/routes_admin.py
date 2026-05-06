@@ -107,6 +107,19 @@ def register_admin_routes(app):
                 if category_counts_raw.get(name, 0)
             ]
             category_breakdown.sort(key=lambda item: (-item["count"], item["label"]))
+            chart_max_count = max(
+                [1]
+                + [item["count"] for item in status_breakdown]
+                + [item["count"] for item in priority_breakdown]
+                + [item["count"] for item in category_breakdown]
+            )
+            unresolved_metrics = [
+                {"label": "Open", "count": open_count, "tone": "info"},
+                {"label": "Stale", "count": len(stale_tickets), "tone": "danger"},
+                {"label": "High priority", "count": len(high_priority_tickets), "tone": "danger"},
+                {"label": "Pending confirmation", "count": len(pending_confirmation_tickets), "tone": "warning"},
+                {"label": "Rejected closure", "count": len(rejected_confirmation_tickets), "tone": "danger"},
+            ]
 
             technician_workload = []
             active_technicians = 0
@@ -156,6 +169,8 @@ def register_admin_routes(app):
                 status_breakdown=status_breakdown,
                 priority_breakdown=priority_breakdown,
                 category_breakdown=category_breakdown,
+                chart_max_count=chart_max_count,
+                unresolved_metrics=unresolved_metrics,
                 technician_workload=technician_workload,
                 recent_unassigned=recent_unassigned,
                 recent_high_priority=recent_high_priority,

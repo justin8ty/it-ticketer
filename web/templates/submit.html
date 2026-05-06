@@ -11,25 +11,35 @@
 <div class="row justify-content-center">
   <div class="col-lg-8">
     <div class="panel">
+      {% if errors %}
+        <div class="alert error-summary" role="alert">
+          <div class="fw-semibold mb-1">Please fix the following fields</div>
+          <ul class="mb-0">
+            {% for message in errors.values() %}<li>{{ message }}</li>{% endfor %}
+          </ul>
+        </div>
+      {% endif %}
       <form method="post" enctype="multipart/form-data">
         <section class="mb-4">
           <h2 class="h6 mb-3">Your contact details</h2>
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label">Full Name *</label>
-              <input class="form-control" name="requester_name" required>
+              <input class="form-control" name="requester_name" value="{{ form.requester_name if form else '' }}" required>
+              {% if errors and errors.requester_name %}<div class="field-error">{{ errors.requester_name }}</div>{% endif %}
             </div>
             <div class="col-md-6">
               <label class="form-label">Email *</label>
-              <input class="form-control" type="email" name="requester_email" required>
+              <input class="form-control" type="email" name="requester_email" value="{{ form.requester_email if form else '' }}" required>
+              {% if errors and errors.requester_email %}<div class="field-error">{{ errors.requester_email }}</div>{% endif %}
             </div>
             <div class="col-md-6">
               <label class="form-label">Phone Number</label>
-              <input class="form-control" name="requester_phone" placeholder="Optional">
+              <input class="form-control" name="requester_phone" value="{{ form.requester_phone if form else '' }}" placeholder="Optional">
             </div>
             <div class="col-md-6">
               <label class="form-label">Telegram Chat ID</label>
-              <input class="form-control" name="requester_telegram_chat_id" placeholder="Optional, example: 123456789">
+              <input class="form-control" name="requester_telegram_chat_id" value="{{ form.requester_telegram_chat_id if form else '' }}" placeholder="Optional, example: 123456789">
             </div>
           </div>
         </section>
@@ -40,10 +50,11 @@
             <div class="col-md-6">
               <label class="form-label">How should we notify you?</label>
               <select class="form-select" name="requester_notification_preference">
-                <option value="BOTH">Email + Telegram</option>
-                <option value="EMAIL">Email only</option>
-                <option value="TELEGRAM">Telegram only</option>
-                <option value="NONE">Do not notify me</option>
+                {% set selected_pref = form.requester_notification_preference if form else 'BOTH' %}
+                <option value="BOTH" {% if selected_pref == 'BOTH' %}selected{% endif %}>Email + Telegram</option>
+                <option value="EMAIL" {% if selected_pref == 'EMAIL' %}selected{% endif %}>Email only</option>
+                <option value="TELEGRAM" {% if selected_pref == 'TELEGRAM' %}selected{% endif %}>Telegram only</option>
+                <option value="NONE" {% if selected_pref == 'NONE' %}selected{% endif %}>Do not notify me</option>
               </select>
             </div>
           </div>
@@ -54,12 +65,14 @@
           <div class="row g-3">
             <div class="col-12">
               <label class="form-label">Issue Title *</label>
-              <input class="form-control" name="issue_title" required placeholder="Example: Unable to print to Canon imageRUNNER">
+              <input class="form-control" name="issue_title" value="{{ form.issue_title if form else '' }}" required placeholder="Example: Unable to print to Canon imageRUNNER">
+              {% if errors and errors.issue_title %}<div class="field-error">{{ errors.issue_title }}</div>{% endif %}
             </div>
             <div class="col-12">
               <label class="form-label">Description *</label>
               <div class="form-text mb-2">Include the affected device, location, error messages, and business impact if relevant.</div>
-              <textarea class="form-control" name="description" rows="6" required placeholder="Describe the issue clearly..."></textarea>
+              <textarea class="form-control" name="description" rows="6" required placeholder="Describe the issue clearly...">{{ form.description if form else '' }}</textarea>
+              {% if errors and errors.description %}<div class="field-error">{{ errors.description }}</div>{% endif %}
             </div>
           </div>
         </section>

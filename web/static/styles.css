@@ -172,6 +172,42 @@ pre { white-space: pre-wrap; }
   background: #fff;
 }
 
+.chart-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.chart-track {
+  height: 0.55rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e9edf5;
+}
+
+.chart-bar {
+  min-width: 0.35rem;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--app-primary);
+}
+
+.chart-bar.primary { background: var(--app-primary); }
+.chart-bar.info { background: var(--app-info); }
+.chart-bar.warning { background: #f59e0b; }
+.chart-bar.danger { background: #ef4444; }
+.chart-bar.success { background: #22c55e; }
+
+.error-summary {
+  border-color: rgba(180, 35, 24, 0.25);
+  background: var(--app-danger-soft);
+}
+
+.field-error {
+  color: var(--app-danger);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
 @media (max-width: 991.98px) {
   .page-header {
     flex-direction: column;

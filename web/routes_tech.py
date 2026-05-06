@@ -78,6 +78,14 @@ def register_tech_routes(app):
             health_questions_json = "[]"
             closure = None
 
+            assigned_open_for_counts = [t for t in tickets if t.status != "CLOSED"]
+            tech_alert_counts = {
+                "assigned": len(tickets),
+                "high_priority": sum(1 for t in assigned_open_for_counts if (t.priority or "").upper() in {"HIGH", "URGENT", "CRITICAL"}),
+                "pending_confirmation": sum(1 for t in assigned_open_for_counts if t.status == "PENDING_CONFIRMATION"),
+                "reopened": sum(1 for t in assigned_open_for_counts if t.status == "REOPENED"),
+            }
+
             if ticket_id_raw:
                 try:
                     ticket_id = int(ticket_id_raw)
@@ -123,6 +131,7 @@ def register_tech_routes(app):
                 health_questions_json=health_questions_json,
                 closure=closure,
                 status_options=status_options,
+                tech_alert_counts=tech_alert_counts,
             )
         finally:
             db.close()
@@ -240,18 +249,29 @@ def register_tech_routes(app):
                             missing = True
                         answers.append({"question": q, "answer": a})
 
-                    if missing:
-                        flash("Please answer all health verification questions.", "danger")
+                    result = request.form.get("result", "PASS").strip().upper()
+                    if result not in ["PASS", "FAIL"]:
+                        result = "PASS"
+                    failure_reason = request.form.get("failure_reason", "").strip()
+                    next_action = request.form.get("next_action", "").strip()
+                    override_requested = request.form.get("override_requested") == "on"
+                    override_reason = request.form.get("override_reason", "").strip()
+
+                    conditional_missing = []
+                    if result == "FAIL" and not failure_reason:
+                        conditional_missing.append("failure reason")
+                    if result == "FAIL" and not next_action:
+                        conditional_missing.append("next action required")
+                    if override_requested and not override_reason:
+                        conditional_missing.append("override request reason")
+
+                    if missing or conditional_missing:
+                        details = []
+                        if missing:
+                            details.append("answer all health verification questions")
+                        details.extend(conditional_missing)
+                        flash("Please provide: " + ", ".join(details) + ".", "danger")
                     else:
-                        result = request.form.get("result", "PASS").strip().upper()
-                        if result not in ["PASS", "FAIL"]:
-                            result = "PASS"
-
-                        failure_reason = request.form.get("failure_reason", "").strip()
-                        next_action = request.form.get("next_action", "").strip()
-                        override_requested = request.form.get("override_requested") == "on"
-                        override_reason = request.form.get("override_reason", "").strip()
-
                         payload = {
                             "category": ticket.category or "Other",
                             "questions": answers,

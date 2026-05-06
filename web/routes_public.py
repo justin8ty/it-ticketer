@@ -38,9 +38,26 @@ def register_public_routes(app):
         issue_title = request.form.get("issue_title", "").strip()
         description = request.form.get("description", "").strip()
 
-        if not requester_name or not requester_email or not issue_title or not description:
-            flash("Please fill in all required fields.", "danger")
-            return redirect(url_for("submit"))
+        errors = {}
+        if not requester_name:
+            errors["requester_name"] = "Full name is required."
+        if not requester_email:
+            errors["requester_email"] = "Email is required."
+        if not issue_title:
+            errors["issue_title"] = "Issue title is required."
+        if not description:
+            errors["description"] = "Description is required."
+        if errors:
+            db = SessionLocal()
+            try:
+                return render_template(
+                    "submit.html",
+                    categories=list_category_names(db),
+                    errors=errors,
+                    form=request.form,
+                ), 400
+            finally:
+                db.close()
 
         token = secrets.token_urlsafe(16)
 
