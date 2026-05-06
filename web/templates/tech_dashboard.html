@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="page-header">
   <div>
-    <h1 class="h4 mb-0">Technician Workspace</h1>
-    <div class="text-muted small">Assigned to: {{ current_user.name }}</div>
+    <div class="home-eyebrow">Technician workspace</div>
+    <h1 class="h3 mb-1">Ticket Queue and Workspace</h1>
+    <p class="text-muted mb-0">Assigned to {{ current_user.name }}. Select a ticket, update the conversation, and complete closure verification.</p>
   </div>
   {% if selected_ticket %}
-    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('track', token=selected_ticket.tracking_token) }}" target="_blank">Open Tracking Page</a>
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('track', token=selected_ticket.tracking_token) }}" target="_blank">Open Requester View</a>
   {% endif %}
 </div>
 
@@ -19,7 +20,7 @@
 <div class="row g-3 tech-workspace">
   <div class="col-lg-4 col-xl-3">
     <div class="offcanvas-lg offcanvas-start tech-queue-panel" tabindex="-1" id="techQueuePanel" aria-labelledby="techQueuePanelLabel">
-      <div class="offcanvas-header border-bottom">
+      <div class="offcanvas-header border-bottom bg-white">
         <div>
           <h2 class="h6 mb-0" id="techQueuePanelLabel">Ticket Queue</h2>
           <div class="text-muted small">Assigned tickets</div>
@@ -52,19 +53,16 @@
         <div class="tech-queue-list">
           {% if tickets %}
             {% for t in tickets %}
-              <a
-                class="tech-queue-item text-decoration-none {% if selected_ticket and selected_ticket.id == t.id %}active{% endif %}"
-                href="{{ url_for('tech_dashboard', ticket_id=t.id, status=status, q=q) }}"
-              >
+              <a class="tech-queue-item text-decoration-none {% if selected_ticket and selected_ticket.id == t.id %}active{% endif %}" href="{{ url_for('tech_dashboard', ticket_id=t.id, status=status, q=q) }}">
                 <div class="d-flex justify-content-between align-items-start gap-2">
                   <div>
                     <div class="fw-semibold text-dark">#{{ t.id }} · {{ t.issue_title }}</div>
                     <div class="text-muted small">{{ t.requester_email }}</div>
                   </div>
-                  <span class="badge text-bg-light">{{ t.priority }}</span>
+                  <span class="status-chip">{{ t.priority }}</span>
                 </div>
                 <div class="d-flex justify-content-between align-items-center mt-2">
-                  <span class="badge text-bg-secondary">{{ t.status }}</span>
+                  <span class="status-chip primary">{{ t.status }}</span>
                   <span class="text-muted small">{{ t.updated_at.strftime("%Y-%m-%d %H:%M") }} UTC</span>
                 </div>
               </a>
@@ -79,28 +77,35 @@
 
   <div class="col-lg-8 col-xl-9">
     {% if selected_ticket %}
-      <div class="d-flex justify-content-between align-items-start mb-3">
+      {% set proof_done = proof_files|length > 0 %}
+      {% set health_pass = health and health.result == "PASS" %}
+      {% set verification_done = selected_ticket.closure_override or health_pass %}
+      {% set confirmation_done = closure and closure.status == "CONFIRMED" %}
+      {% set confirmation_waiting = closure and closure.status == "PENDING" %}
+      {% set progress = (1 if proof_done else 0) + (1 if verification_done else 0) + (1 if confirmation_done else 0) %}
+
+      <div class="d-flex justify-content-between align-items-start gap-3 mb-3 flex-wrap">
         <div>
           <h2 class="h4 mb-1">Ticket #{{ selected_ticket.id }}</h2>
-          <div class="text-muted">Requester: {{ selected_ticket.requester_name }} ({{ selected_ticket.requester_email }})</div>
+          <div class="text-muted">{{ selected_ticket.requester_name }} · {{ selected_ticket.requester_email }}</div>
           <div class="text-muted small">Tracking: <a href="{{ url_for('track', token=selected_ticket.tracking_token) }}" target="_blank">/t/{{ selected_ticket.tracking_token }}</a></div>
         </div>
-        <div class="text-end">
-          <div class="badge text-bg-secondary fs-6">{{ selected_ticket.status }}</div>
-          <div class="text-muted small">Priority: {{ selected_ticket.priority }} | Category: {{ selected_ticket.category }}</div>
+        <div class="text-md-end">
+          <span class="status-chip primary">{{ selected_ticket.status }}</span>
+          <div class="small text-muted mt-2">Priority: {{ selected_ticket.priority }} · Category: {{ selected_ticket.category }}</div>
         </div>
       </div>
 
-      <div class="row g-3">
-        <div class="col-xl-8">
-          <div class="p-4 rounded-4 border bg-white">
-            <h3 class="h6">Issue</h3>
-            <div class="fw-semibold">{{ selected_ticket.issue_title }}</div>
+      <div class="workspace-grid">
+        <div>
+          <div class="panel mb-3">
+            <h3 class="h5 mb-3">Issue</h3>
+            <div class="fw-semibold fs-5">{{ selected_ticket.issue_title }}</div>
             <div class="mt-2" style="white-space: pre-wrap;">{{ selected_ticket.description }}</div>
 
             {% if selected_ticket.ai_summary or selected_ticket.ai_solution_suggestion %}
             <hr>
-            <h3 class="h6">Initial Assessment</h3>
+            <h3 class="h6">AI Initial Assessment</h3>
             {% if selected_ticket.ai_summary %}
               <div class="text-muted small">Issue Summary</div>
               <div class="p-3 bg-light border rounded">{{ selected_ticket.ai_summary }}</div>
@@ -112,17 +117,20 @@
             {% endif %}
           </div>
 
-          <div class="p-4 rounded-4 border bg-white mt-3">
-            <h3 class="h6">Messages</h3>
+          <div class="panel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h3 class="h5 mb-0">Conversation</h3>
+              <div class="d-flex gap-2"><span class="status-chip info">Public</span><span class="status-chip">Internal</span></div>
+            </div>
 
             <div class="row g-3">
               <div class="col-md-6">
-                <div class="fw-semibold small mb-2">Public</div>
+                <div class="fw-semibold small mb-2">Public updates</div>
                 {% if public_msgs %}
                   <div class="list-group tech-message-list">
                     {% for m in public_msgs %}
                       <div class="list-group-item">
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between gap-2">
                           <div class="fw-semibold">{{ m.author_role }}</div>
                           <div class="text-muted small">{{ m.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</div>
                         </div>
@@ -131,17 +139,17 @@
                     {% endfor %}
                   </div>
                 {% else %}
-                  <div class="text-muted small">None</div>
+                  <div class="text-muted small">No public updates yet.</div>
                 {% endif %}
               </div>
 
               <div class="col-md-6">
-                <div class="fw-semibold small mb-2">Internal</div>
+                <div class="fw-semibold small mb-2">Internal notes</div>
                 {% if internal_msgs %}
                   <div class="list-group tech-message-list">
                     {% for m in internal_msgs %}
                       <div class="list-group-item">
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between gap-2">
                           <div class="fw-semibold">{{ m.author_role }}</div>
                           <div class="text-muted small">{{ m.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</div>
                         </div>
@@ -150,7 +158,7 @@
                     {% endfor %}
                   </div>
                 {% else %}
-                  <div class="text-muted small">None</div>
+                  <div class="text-muted small">No internal notes yet.</div>
                 {% endif %}
               </div>
             </div>
@@ -160,6 +168,7 @@
               <input type="hidden" name="action" value="add_message">
               <input type="hidden" name="return_status" value="{{ status }}">
               <input type="hidden" name="return_q" value="{{ q }}">
+              <label class="form-label small fw-semibold">Add update</label>
               <div class="row g-2">
                 <div class="col-md-3">
                   <select class="form-select" name="message_type">
@@ -168,127 +177,153 @@
                   </select>
                 </div>
                 <div class="col-md-9">
-                  <input class="form-control" name="content" placeholder="Type message / update..." required>
+                  <input class="form-control" name="content" placeholder="Type message or update..." required>
                 </div>
               </div>
-              <button class="btn btn-primary btn-sm mt-2" type="submit">Post</button>
+              <button class="btn btn-primary btn-sm mt-2" type="submit">Post update</button>
             </form>
           </div>
         </div>
 
-        <div class="col-xl-4">
-          <div class="p-4 rounded-4 border bg-body-tertiary tech-actions-panel">
-            <h3 class="h6">Actions</h3>
-
-            <form method="post" action="{{ url_for('tech_ticket', ticket_id=selected_ticket.id) }}" class="mb-3">
-              <input type="hidden" name="action" value="update_status">
-              <input type="hidden" name="return_status" value="{{ status }}">
-              <input type="hidden" name="return_q" value="{{ q }}">
-              <label class="form-label small">Update status</label>
-              <select class="form-select" name="status">
-                {% for s in status_options %}
-                  <option value="{{ s }}" {% if selected_ticket.status==s %}selected{% endif %}>{{ s }}</option>
-                {% endfor %}
-              </select>
-              <button class="btn btn-secondary btn-sm mt-2 w-100" type="submit">Apply</button>
-              <div class="small text-muted mt-2">
-                Closing requires proof of resolution, a PASS verification result or administrative override, and requester confirmation by electronic signature.
-              </div>
-            </form>
-
-            <hr>
-            <h3 class="h6">Upload</h3>
-            <form method="post" action="{{ url_for('tech_ticket', ticket_id=selected_ticket.id) }}" enctype="multipart/form-data" class="mb-3">
-              <input type="hidden" name="action" value="upload_attachment">
-              <input type="hidden" name="return_status" value="{{ status }}">
-              <input type="hidden" name="return_q" value="{{ q }}">
-              <label class="form-label small">Attachment type</label>
-              <select class="form-select" name="attachment_type">
-                <option value="Issue">Issue</option>
-                <option value="Proof-of-Fix">Proof of Resolution</option>
-              </select>
-              <input class="form-control mt-2" type="file" name="file" required>
-              <button class="btn btn-dark btn-sm mt-2 w-100" type="submit">Upload</button>
-            </form>
-
-            <div class="small">
-              <div class="fw-semibold">Issue files</div>
-              {% if issue_files %}
-                <ul class="mb-2">
-                {% for a in issue_files %}
-                  <li><a href="{{ url_for('download_attachment', attachment_id=a.id) }}">{{ a.filename }}</a></li>
-                {% endfor %}
-                </ul>
-              {% else %}<div class="text-muted">None</div>{% endif %}
-
-              <div class="fw-semibold mt-2">Proof of Resolution</div>
-              {% if proof_files %}
-                <ul class="mb-0">
-                {% for a in proof_files %}
-                  <li><a href="{{ url_for('download_attachment', attachment_id=a.id) }}">{{ a.filename }}</a></li>
-                {% endfor %}
-                </ul>
-              {% else %}<div class="text-muted">None</div>{% endif %}
+        <aside class="sidebar-panel tech-actions-panel">
+          <div class="mb-3">
+            <h3 class="h5 mb-2">Ticket properties</h3>
+            <div class="verification-summary">
+              <div class="d-flex justify-content-between small mb-1"><span>Status</span><strong>{{ selected_ticket.status }}</strong></div>
+              <div class="d-flex justify-content-between small mb-1"><span>Priority</span><strong>{{ selected_ticket.priority }}</strong></div>
+              <div class="d-flex justify-content-between small"><span>Category</span><strong>{{ selected_ticket.category }}</strong></div>
             </div>
+          </div>
 
-            <hr>
-            <h3 class="h6">Verification Checklist</h3>
-            <form method="post" action="{{ url_for('tech_ticket', ticket_id=selected_ticket.id) }}" class="mb-2">
-              <input type="hidden" name="action" value="health_check">
-              <input type="hidden" name="return_status" value="{{ status }}">
-              <input type="hidden" name="return_q" value="{{ q }}">
-              <input type="hidden" name="questions_json" value="{{ health_questions_json }}">
-              {% for q_item in health_questions %}
-                <div class="mb-2">
-                  <label class="form-label small">{{ q_item }}</label>
-                  <textarea class="form-control" name="answer_{{ loop.index0 }}" rows="2" required></textarea>
-                </div>
+          <form method="post" action="{{ url_for('tech_ticket', ticket_id=selected_ticket.id) }}" class="mb-3">
+            <input type="hidden" name="action" value="update_status">
+            <input type="hidden" name="return_status" value="{{ status }}">
+            <input type="hidden" name="return_q" value="{{ q }}">
+            <label class="form-label small fw-semibold">Update status</label>
+            <select class="form-select" name="status">
+              {% for s in status_options %}
+                <option value="{{ s }}" {% if selected_ticket.status==s %}selected{% endif %}>{{ s }}</option>
               {% endfor %}
-              <div class="mt-2">
+            </select>
+            <button class="btn btn-secondary btn-sm mt-2 w-100" type="submit">Apply status</button>
+          </form>
+
+          <hr>
+
+          <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+            <div>
+              <h3 class="h5 mb-1">Closure Verification</h3>
+              <div class="text-muted small">Progress: {{ progress }} of 3 completed</div>
+            </div>
+            <span class="status-chip {% if progress == 3 %}success{% elif progress > 0 %}info{% else %}warning{% endif %}">{{ progress }}/3</span>
+          </div>
+
+          <div class="d-grid gap-3">
+            <section class="verification-step">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="fw-semibold">1. Proof of Fix</div>
+                {% if proof_done %}<span class="status-chip success">Completed</span>{% else %}<span class="status-chip warning">Not started</span>{% endif %}
+              </div>
+              {% if proof_files %}
+                <ul class="small mb-2 ps-3">
+                  {% for a in proof_files %}
+                    <li><a href="{{ url_for('download_attachment', attachment_id=a.id) }}">{{ a.filename }}</a></li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <div class="small text-muted mb-2">Upload evidence before requester confirmation.</div>
+              {% endif %}
+              <form method="post" action="{{ url_for('tech_ticket', ticket_id=selected_ticket.id) }}" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="upload_attachment">
+                <input type="hidden" name="return_status" value="{{ status }}">
+                <input type="hidden" name="return_q" value="{{ q }}">
+                <input type="hidden" name="attachment_type" value="Proof-of-Fix">
+                <input class="form-control form-control-sm" type="file" name="file" required>
+                <button class="btn btn-outline-primary btn-sm mt-2 w-100" type="submit">Upload proof</button>
+              </form>
+            </section>
+
+            <section class="verification-step">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="fw-semibold">2. Health Check</div>
+                {% if selected_ticket.closure_override %}
+                  <span class="status-chip warning">Override</span>
+                {% elif health and health.result == "PASS" %}
+                  <span class="status-chip success">Passed</span>
+                {% elif health and health.result == "FAIL" %}
+                  <span class="status-chip danger">Failed</span>
+                {% else %}
+                  <span class="status-chip warning">Not recorded</span>
+                {% endif %}
+              </div>
+              {% if health %}
+                <div class="small text-muted mb-2">Latest {{ health.result }} · {{ health.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</div>
+              {% endif %}
+              <form method="post" action="{{ url_for('tech_ticket', ticket_id=selected_ticket.id) }}">
+                <input type="hidden" name="action" value="health_check">
+                <input type="hidden" name="return_status" value="{{ status }}">
+                <input type="hidden" name="return_q" value="{{ q }}">
+                <input type="hidden" name="questions_json" value="{{ health_questions_json }}">
+                {% for q_item in health_questions %}
+                  <div class="mb-2">
+                    <label class="form-label small">{{ q_item }}</label>
+                    <textarea class="form-control form-control-sm" name="answer_{{ loop.index0 }}" rows="2" required></textarea>
+                  </div>
+                {% endfor %}
                 <label class="form-label small">Result</label>
-                <select class="form-select" name="result">
+                <select class="form-select form-select-sm" name="result">
                   <option value="PASS">PASS</option>
                   <option value="FAIL">FAIL</option>
                 </select>
-              </div>
-              <button class="btn btn-outline-secondary btn-sm mt-2 w-100" type="submit">Save Health Check</button>
-            </form>
+                <button class="btn btn-outline-primary btn-sm mt-2 w-100" type="submit">Save health check</button>
+              </form>
+            </section>
 
-            {% if health %}
-              <div class="alert alert-light border small mb-0">
-                Latest: <span class="badge text-bg-success">{{ health.result }}</span><br>
-                <span class="text-muted">{{ health.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</span>
+            <section class="verification-step">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="fw-semibold">3. Requester Confirmation</div>
+                {% if confirmation_done %}
+                  <span class="status-chip success">Signed</span>
+                {% elif confirmation_waiting %}
+                  <span class="status-chip warning">Waiting</span>
+                {% else %}
+                  <span class="status-chip">Not requested</span>
+                {% endif %}
               </div>
-            {% endif %}
+              {% if confirmation_done %}
+                <div class="small text-muted">Confirmed at {{ closure.confirmed_at.strftime("%Y-%m-%d %H:%M") }} UTC.</div>
+              {% elif confirmation_waiting %}
+                <div class="small text-muted">The requester has been asked to sign on the tracking page.</div>
+              {% else %}
+                <div class="small text-muted mb-2">Request signature after proof and verification are complete.</div>
+                <form method="post" action="{{ url_for('tech_ticket', ticket_id=selected_ticket.id) }}">
+                  <input type="hidden" name="action" value="request_esign">
+                  <input type="hidden" name="return_status" value="{{ status }}">
+                  <input type="hidden" name="return_q" value="{{ q }}">
+                  <button class="btn btn-primary btn-sm w-100" type="submit">Send for confirmation</button>
+                </form>
+              {% endif %}
+            </section>
 
-            <hr>
-            <h3 class="h6">Closure Confirmation</h3>
-
-            {% if closure and closure.status == "PENDING" %}
-              <div class="alert alert-warning small">
-                Closure confirmation has been requested and is awaiting requester signature.
-              </div>
-            {% elif closure and closure.status == "CONFIRMED" %}
-              <div class="alert alert-success small">
-                Confirmed at {{ closure.confirmed_at.strftime("%Y-%m-%d %H:%M") }} UTC.
-              </div>
-            {% else %}
-              <div class="text-muted small">
-                Request confirmation after proof of resolution and a PASS verification result, or after an administrative override. The requester signs on the tracking page.
-              </div>
-            {% endif %}
-
-            <form method="post" action="{{ url_for('tech_ticket', ticket_id=selected_ticket.id) }}" class="mt-2">
-              <input type="hidden" name="action" value="request_esign">
-              <input type="hidden" name="return_status" value="{{ status }}">
-              <input type="hidden" name="return_q" value="{{ q }}">
-              <button class="btn btn-primary btn-sm w-100" type="submit">Request Electronic Signature</button>
-            </form>
+            <section class="verification-summary bg-white">
+              <h4 class="h6 mb-2">Review and Close</h4>
+              <div class="d-flex justify-content-between small mb-1"><span>Proof of fix</span><strong>{% if proof_done %}Uploaded{% else %}Missing{% endif %}</strong></div>
+              <div class="d-flex justify-content-between small mb-1"><span>Health check</span><strong>{% if selected_ticket.closure_override %}Override{% elif health %}{{ health.result }}{% else %}Missing{% endif %}</strong></div>
+              <div class="d-flex justify-content-between small mb-1"><span>Requester confirmation</span><strong>{% if confirmation_done %}Signed{% elif confirmation_waiting %}Pending{% else %}Not requested{% endif %}</strong></div>
+              <div class="d-flex justify-content-between small mb-3"><span>Override</span><strong>{% if selected_ticket.closure_override %}Yes{% else %}No{% endif %}</strong></div>
+              <form method="post" action="{{ url_for('tech_ticket', ticket_id=selected_ticket.id) }}">
+                <input type="hidden" name="action" value="update_status">
+                <input type="hidden" name="status" value="CLOSED">
+                <input type="hidden" name="return_status" value="{{ status }}">
+                <input type="hidden" name="return_q" value="{{ q }}">
+                <button class="btn btn-dark btn-sm w-100" type="submit">Close Ticket</button>
+              </form>
+            </section>
           </div>
-        </div>
+        </aside>
       </div>
     {% else %}
-      <div class="p-5 rounded-4 border bg-white text-center">
+      <div class="panel text-center py-5">
         <h2 class="h5 mb-2">Select a ticket from the queue</h2>
         <p class="text-muted mb-0">Use the ticket list to open one assigned ticket in this workspace.</p>
       </div>
