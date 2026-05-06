@@ -159,6 +159,8 @@ def register_public_routes(app):
                     cc.status = "CONFIRMED"
                     cc.signature_name = signature_file
                     cc.confirmed_at = now_utc()
+                    cc.rejected_at = None
+                    cc.rejection_reason = None
                     cc.updated_at = now_utc()
                     ticket.updated_at = now_utc()
                     db.add(
@@ -192,6 +194,40 @@ def register_public_routes(app):
                     flash("Your confirmation has been recorded.", "success")
                     return redirect(url_for("track", token=token))
 
+                if action == "reject_closure":
+                    cc = ticket.closure_confirmation
+                    reason = request.form.get("rejection_reason", "").strip()
+                    if not cc or cc.status != "PENDING":
+                        flash("No closure confirmation is pending for this ticket.", "warning")
+                        return redirect(url_for("track", token=token))
+                    if not reason:
+                        flash("Please explain why the issue is still unresolved.", "danger")
+                        return redirect(url_for("track", token=token))
+
+                    cc.status = "REJECTED"
+                    cc.rejected_at = now_utc()
+                    cc.rejection_reason = reason
+                    cc.updated_at = now_utc()
+                    set_ticket_lookups(ticket, db, status="REOPENED")
+                    ticket.updated_at = now_utc()
+                    db.add(
+                        Message(
+                            ticket_id=ticket.id,
+                            requester_id=ticket.requester_id,
+                            message_type="Public",
+                            message_text=f"Requester reported the issue is still unresolved: {reason}",
+                        )
+                    )
+                    db.commit()
+                    notify_technician(
+                        ticket,
+                        "closure_rejected",
+                        f"The requester reported the issue is still unresolved: {reason}",
+                        base_url=request.url_root,
+                    )
+                    flash("Your response has been recorded. The ticket has been reopened.", "success")
+                    return redirect(url_for("track", token=token))
+
                 flash("Unsupported action.", "warning")
                 return redirect(url_for("track", token=token))
 
@@ -214,8 +250,7 @@ def register_public_routes(app):
         finally:
             db.close()
 
-    @app.get("/download/<int:attachment_id>")
-    def download_attachment(attachment_id: int):
+    def _send_attachment_file(attachment_id: int, *, as_attachment: bool):
         db = SessionLocal()
         try:
             att = db.query(Attachment).filter(Attachment.id == attachment_id).first()
@@ -224,6 +259,14 @@ def register_public_routes(app):
             path = Path(att.path)
             if not path.exists():
                 abort(404)
-            return send_from_directory(path.parent, path.name, as_attachment=True)
+            return send_from_directory(path.parent, path.name, as_attachment=as_attachment)
         finally:
             db.close()
+
+    @app.get("/preview/<int:attachment_id>")
+    def preview_attachment(attachment_id: int):
+        return _send_attachment_file(attachment_id, as_attachment=False)
+
+    @app.get("/download/<int:attachment_id>")
+    def download_attachment(attachment_id: int):
+        return _send_attachment_file(attachment_id, as_attachment=True)

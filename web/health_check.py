@@ -252,6 +252,10 @@ def format_health_check_display(health: HealthCheck | None) -> dict | None:
             "type": "qa",
             "category": data.get("category"),
             "questions": questions,
+            "failure_reason": data.get("failure_reason"),
+            "next_action": data.get("next_action"),
+            "override_requested": data.get("override_requested"),
+            "override_reason": data.get("override_reason"),
         }
 
     if isinstance(data, dict):

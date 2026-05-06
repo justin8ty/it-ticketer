@@ -14,6 +14,7 @@ def save_attachment(
     attachment_type: str,
     uploaded_by_role: str,
     uploaded_by_id: int | None,
+    description: str | None = None,
 ) -> Attachment | None:
     filename = secure_filename(file.filename)
     if not filename:
@@ -42,4 +43,5 @@ def save_attachment(
         attachment_type=attachment_type,
         uploaded_by_requester_id=uploaded_by_requester_id,
         uploaded_by_technician_id=uploaded_by_technician_id,
+        attachment_description=(description or "").strip() or None,
     )

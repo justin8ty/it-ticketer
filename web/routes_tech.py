@@ -192,7 +192,7 @@ def register_tech_routes(app):
                                 )
                             else:
                                 flash(
-                                    "Closure requirements are not satisfied. Upload proof of resolution and record a PASS verification result, or request an administrative override.",
+                                    "Closure requirements are not satisfied. Upload proof of fix and record a PASS verification result, or request an administrative override.",
                                     "danger",
                                 )
                     else:
@@ -218,6 +218,7 @@ def register_tech_routes(app):
                             attachment_type=atype,
                             uploaded_by_role="Technician",
                             uploaded_by_id=current_user.user_id,
+                            description=request.form.get("proof_description", "") if atype == "Proof-of-Fix" else None,
                         )
                         if saved:
                             db.add(saved)
@@ -246,9 +247,18 @@ def register_tech_routes(app):
                         if result not in ["PASS", "FAIL"]:
                             result = "PASS"
 
+                        failure_reason = request.form.get("failure_reason", "").strip()
+                        next_action = request.form.get("next_action", "").strip()
+                        override_requested = request.form.get("override_requested") == "on"
+                        override_reason = request.form.get("override_reason", "").strip()
+
                         payload = {
                             "category": ticket.category or "Other",
                             "questions": answers,
+                            "failure_reason": failure_reason if result == "FAIL" else "",
+                            "next_action": next_action if result == "FAIL" else "",
+                            "override_requested": override_requested,
+                            "override_reason": override_reason if override_requested else "",
                         }
                         db.add(
                             HealthCheck(
@@ -256,6 +266,7 @@ def register_tech_routes(app):
                                 technician_id=current_user.user_id,
                                 checklist_json=json.dumps(payload),
                                 result=result,
+                                notes=(failure_reason or next_action or override_reason or None),
                             )
                         )
                         ticket.updated_at = now_utc()
@@ -264,7 +275,7 @@ def register_tech_routes(app):
                 elif action == "request_esign":
                     # Request confirmation only after resolution evidence and verification are complete
                     if not ticket_has_proof(ticket):
-                        flash("Upload proof of resolution before requesting confirmation.", "danger")
+                        flash("Upload proof of fix before requesting confirmation.", "danger")
                     else:
                         hc = latest_health_check(ticket)
                         hc_ok = ticket.closure_override or (hc and hc.result == "PASS")
@@ -290,6 +301,8 @@ def register_tech_routes(app):
 
                                 cc.status = "PENDING"
                                 cc.signature_name = None
+                                cc.rejected_at = None
+                                cc.rejection_reason = None
                                 cc.requested_at = now_utc()
                                 cc.updated_at = now_utc()
 

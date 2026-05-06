@@ -226,11 +226,19 @@
                 {% if proof_done %}<span class="status-chip success">Completed</span>{% else %}<span class="status-chip warning">Not started</span>{% endif %}
               </div>
               {% if proof_files %}
-                <ul class="small mb-2 ps-3">
+                <div class="d-grid gap-2 mb-2">
                   {% for a in proof_files %}
-                    <li><a href="{{ url_for('download_attachment', attachment_id=a.id) }}">{{ a.filename }}</a></li>
+                    {% set fname = a.filename|lower %}
+                    <div class="bg-white border rounded p-2 small">
+                      {% if fname.endswith('.png') or fname.endswith('.jpg') or fname.endswith('.jpeg') or fname.endswith('.gif') or fname.endswith('.webp') %}
+                        <img class="proof-thumb mb-2" src="{{ url_for('preview_attachment', attachment_id=a.id) }}" alt="Proof of fix preview">
+                      {% endif %}
+                      <div><a href="{{ url_for('download_attachment', attachment_id=a.id) }}">{{ a.filename }}</a></div>
+                      {% if a.description %}<div class="mt-1">{{ a.description }}</div>{% endif %}
+                      <div class="text-muted">Uploaded {{ a.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</div>
+                    </div>
                   {% endfor %}
-                </ul>
+                </div>
               {% else %}
                 <div class="small text-muted mb-2">Upload evidence before requester confirmation.</div>
               {% endif %}
@@ -239,6 +247,8 @@
                 <input type="hidden" name="return_status" value="{{ status }}">
                 <input type="hidden" name="return_q" value="{{ q }}">
                 <input type="hidden" name="attachment_type" value="Proof-of-Fix">
+                <label class="form-label small">Technician explanation</label>
+                <textarea class="form-control form-control-sm mb-2" name="proof_description" rows="2" placeholder="Describe what was fixed and what this proof shows."></textarea>
                 <input class="form-control form-control-sm" type="file" name="file" required>
                 <button class="btn btn-outline-primary btn-sm mt-2 w-100" type="submit">Upload proof</button>
               </form>
@@ -259,6 +269,7 @@
               </div>
               {% if health %}
                 <div class="small text-muted mb-2">Latest {{ health.result }} · {{ health.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</div>
+                {% if health.notes %}<div class="alert alert-light border small py-2">{{ health.notes }}</div>{% endif %}
               {% endif %}
               <form method="post" action="{{ url_for('tech_ticket', ticket_id=selected_ticket.id) }}">
                 <input type="hidden" name="action" value="health_check">
@@ -272,10 +283,24 @@
                   </div>
                 {% endfor %}
                 <label class="form-label small">Result</label>
-                <select class="form-select form-select-sm" name="result">
+                <select class="form-select form-select-sm health-result-select" name="result">
                   <option value="PASS">PASS</option>
                   <option value="FAIL">FAIL</option>
                 </select>
+                <div class="health-failure-fields mt-2 d-none">
+                  <label class="form-label small">Failure reason</label>
+                  <textarea class="form-control form-control-sm" name="failure_reason" rows="2" placeholder="Explain what failed or remains unresolved."></textarea>
+                  <label class="form-label small mt-2">Next action required</label>
+                  <textarea class="form-control form-control-sm" name="next_action" rows="2" placeholder="Describe the next repair or follow-up action."></textarea>
+                </div>
+                <div class="form-check mt-2">
+                  <input class="form-check-input override-request-toggle" type="checkbox" name="override_requested" id="overrideRequested{{ selected_ticket.id }}">
+                  <label class="form-check-label small" for="overrideRequested{{ selected_ticket.id }}">Supervisor override required</label>
+                </div>
+                <div class="override-reason-field mt-2 d-none">
+                  <label class="form-label small">Override request reason</label>
+                  <textarea class="form-control form-control-sm" name="override_reason" rows="2" placeholder="Explain why admin override is needed."></textarea>
+                </div>
                 <button class="btn btn-outline-primary btn-sm mt-2 w-100" type="submit">Save health check</button>
               </form>
             </section>
@@ -285,6 +310,8 @@
                 <div class="fw-semibold">3. Requester Confirmation</div>
                 {% if confirmation_done %}
                   <span class="status-chip success">Signed</span>
+                {% elif closure and closure.status == "REJECTED" %}
+                  <span class="status-chip danger">Rejected</span>
                 {% elif confirmation_waiting %}
                   <span class="status-chip warning">Waiting</span>
                 {% else %}
@@ -293,6 +320,11 @@
               </div>
               {% if confirmation_done %}
                 <div class="small text-muted">Confirmed at {{ closure.confirmed_at.strftime("%Y-%m-%d %H:%M") }} UTC.</div>
+              {% elif closure and closure.status == "REJECTED" %}
+                <div class="alert alert-warning small mb-0">
+                  <div class="fw-semibold">Requester reported unresolved</div>
+                  {% if closure.rejection_reason %}<div>{{ closure.rejection_reason }}</div>{% endif %}
+                </div>
               {% elif confirmation_waiting %}
                 <div class="small text-muted">The requester has been asked to sign on the tracking page.</div>
               {% else %}
@@ -310,7 +342,7 @@
               <h4 class="h6 mb-2">Review and Close</h4>
               <div class="d-flex justify-content-between small mb-1"><span>Proof of fix</span><strong>{% if proof_done %}Uploaded{% else %}Missing{% endif %}</strong></div>
               <div class="d-flex justify-content-between small mb-1"><span>Health check</span><strong>{% if selected_ticket.closure_override %}Override{% elif health %}{{ health.result }}{% else %}Missing{% endif %}</strong></div>
-              <div class="d-flex justify-content-between small mb-1"><span>Requester confirmation</span><strong>{% if confirmation_done %}Signed{% elif confirmation_waiting %}Pending{% else %}Not requested{% endif %}</strong></div>
+              <div class="d-flex justify-content-between small mb-1"><span>Requester confirmation</span><strong>{% if confirmation_done %}Signed{% elif closure and closure.status == "REJECTED" %}Rejected{% elif confirmation_waiting %}Pending{% else %}Not requested{% endif %}</strong></div>
               <div class="d-flex justify-content-between small mb-3"><span>Override</span><strong>{% if selected_ticket.closure_override %}Yes{% else %}No{% endif %}</strong></div>
               <form method="post" action="{{ url_for('tech_ticket', ticket_id=selected_ticket.id) }}">
                 <input type="hidden" name="action" value="update_status">
@@ -331,4 +363,29 @@
     {% endif %}
   </div>
 </div>
+<script>
+document.querySelectorAll(".health-result-select").forEach((select) => {
+  const form = select.closest("form");
+  if (!form) return;
+  const failureFields = form.querySelector(".health-failure-fields");
+  const syncFailure = () => {
+    if (!failureFields) return;
+    failureFields.classList.toggle("d-none", select.value !== "FAIL");
+  };
+  select.addEventListener("change", syncFailure);
+  syncFailure();
+});
+
+document.querySelectorAll(".override-request-toggle").forEach((checkbox) => {
+  const form = checkbox.closest("form");
+  if (!form) return;
+  const reasonField = form.querySelector(".override-reason-field");
+  const syncOverride = () => {
+    if (!reasonField) return;
+    reasonField.classList.toggle("d-none", !checkbox.checked);
+  };
+  checkbox.addEventListener("change", syncOverride);
+  syncOverride();
+});
+</script>
 {% endblock %}

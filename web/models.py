@@ -284,6 +284,7 @@ class Attachment(Base):
     ticket_id = Column(Integer, ForeignKey("ticket.ticket_id"), nullable=False)
     uploaded_by_requester_id = Column(Integer, ForeignKey("requester.requester_id"), nullable=True)
     uploaded_by_technician_id = Column(Integer, ForeignKey("technician.technician_id"), nullable=True)
+    attachment_description = Column(Text, nullable=True)
     uploaded_at = Column(DateTime, default=datetime.utcnow)
 
     ticket = relationship("Ticket", back_populates="attachments")
@@ -295,6 +296,7 @@ class Attachment(Base):
     path = synonym("attachment_path")
     sha256 = synonym("attachment_hash")
     created_at = synonym("uploaded_at")
+    description = synonym("attachment_description")
 
     @property
     def uploaded_by_role(self) -> str | None:
@@ -340,6 +342,8 @@ class ClosureConfirmation(Base):
     requester_id = Column(Integer, ForeignKey("requester.requester_id"), nullable=False)
     requested_at = Column(DateTime, nullable=True)
     confirmed_at = Column(DateTime, nullable=True)
+    rejected_at = Column(DateTime, nullable=True)
+    rejection_reason = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

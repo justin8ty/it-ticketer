@@ -162,6 +162,16 @@ pre { white-space: pre-wrap; }
   border: 1px solid var(--app-border);
 }
 
+.proof-thumb {
+  display: block;
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 0.75rem;
+  border: 1px solid var(--app-border);
+  background: #fff;
+}
+
 @media (max-width: 991.98px) {
   .page-header {
     flex-direction: column;

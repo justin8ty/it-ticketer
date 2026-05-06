@@ -8,6 +8,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from roles_auth import AuthUser, require_role
 from config import NOTIFICATION_PREFERENCES
 from db import SessionLocal
+from health_check import latest_health_check
 from models import Admin, AdminActionLog, Requester, Status, Technician, Ticket
 from notification_service import normalize_notification_preference, notify_requester, notify_technician
 from tickets import can_close_ticket, list_category_names, list_priority_names, list_status_names, set_ticket_lookups
@@ -80,7 +81,11 @@ def register_admin_routes(app):
             unassigned_tickets = [t for t in open_tickets if not t.assigned_technician_id]
             pending_confirmation_tickets = [t for t in open_tickets if t.status == "PENDING_CONFIRMATION"]
             override_tickets = [t for t in open_tickets if t.closure_override]
-            high_priority_tickets = [t for t in open_tickets if (t.priority or "").upper() in {"HIGH", "URGENT"}]
+            rejected_confirmation_tickets = [
+                t for t in open_tickets if t.closure_confirmation and t.closure_confirmation.status == "REJECTED"
+            ]
+            failed_health_tickets = [t for t in open_tickets if latest_health_check(t) and latest_health_check(t).result == "FAIL"]
+            high_priority_tickets = [t for t in open_tickets if (t.priority or "").upper() in {"HIGH", "URGENT", "CRITICAL"}]
             stale_cutoff = now_utc() - timedelta(days=3)
             stale_tickets = [t for t in open_tickets if t.updated_at and t.updated_at < stale_cutoff]
 
@@ -114,7 +119,7 @@ def register_admin_routes(app):
                         "tech": tech,
                         "open_count": len(assigned_open),
                         "high_priority_count": sum(
-                            1 for t in assigned_open if (t.priority or "").upper() in {"HIGH", "URGENT"}
+                            1 for t in assigned_open if (t.priority or "").upper() in {"HIGH", "URGENT", "CRITICAL"}
                         ),
                         "pending_confirmation_count": sum(1 for t in assigned_open if t.status == "PENDING_CONFIRMATION"),
                         "latest_update": max((t.updated_at for t in assigned_open), default=None),
@@ -131,6 +136,8 @@ def register_admin_routes(app):
                 pending_confirmation_tickets, key=lambda t: t.updated_at, reverse=True
             )[:8]
             recent_stale = sorted(stale_tickets, key=lambda t: t.updated_at)[:8]
+            recent_rejected_confirmation = sorted(rejected_confirmation_tickets, key=lambda t: t.updated_at, reverse=True)[:8]
+            recent_failed_health = sorted(failed_health_tickets, key=lambda t: t.updated_at, reverse=True)[:8]
 
             return render_template(
                 "admin_dashboard.html",
@@ -142,6 +149,8 @@ def register_admin_routes(app):
                 unassigned_count=len(unassigned_tickets),
                 pending_confirmation_count=len(pending_confirmation_tickets),
                 override_count=len(override_tickets),
+                rejected_confirmation_count=len(rejected_confirmation_tickets),
+                failed_health_count=len(failed_health_tickets),
                 high_priority_count=len(high_priority_tickets),
                 stale_count=len(stale_tickets),
                 status_breakdown=status_breakdown,
@@ -152,6 +161,8 @@ def register_admin_routes(app):
                 recent_high_priority=recent_high_priority,
                 recent_pending_confirmation=recent_pending_confirmation,
                 recent_stale=recent_stale,
+                recent_rejected_confirmation=recent_rejected_confirmation,
+                recent_failed_health=recent_failed_health,
                 recent=recent,
             )
         finally:

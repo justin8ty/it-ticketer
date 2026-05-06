@@ -113,6 +113,8 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
       <span class="status-chip warning">{{ pending_confirmation_count }} waiting</span>
+      <span class="status-chip danger">{{ rejected_confirmation_count }} rejected</span>
+      <span class="status-chip danger">{{ failed_health_count }} failed checks</span>
       <span class="status-chip danger">{{ stale_count }} stale</span>
       <span class="status-chip">{{ override_count }} overrides</span>
     </div>
@@ -153,6 +155,62 @@
           </div>
         {% else %}
           <div class="text-muted small">No tickets are waiting for requester confirmation.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="col-xl-6">
+      <div class="verification-step h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="h6 mb-0">Rejected Closure Requests</h3>
+          <span class="status-chip danger">{{ rejected_confirmation_count }}</span>
+        </div>
+        {% if recent_rejected_confirmation %}
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead><tr><th>ID</th><th>Title</th><th>Reason</th><th></th></tr></thead>
+              <tbody>
+                {% for t in recent_rejected_confirmation %}
+                  <tr>
+                    <td>#{{ t.id }}</td>
+                    <td>{{ t.issue_title }}</td>
+                    <td class="text-muted small">{{ t.closure_confirmation.rejection_reason or "No reason recorded" }}</td>
+                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_edit_ticket', ticket_id=t.id) }}">Edit</a></td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-muted small">No rejected closure requests.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="col-xl-6">
+      <div class="verification-step h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="h6 mb-0">Failed Health Checks</h3>
+          <span class="status-chip danger">{{ failed_health_count }}</span>
+        </div>
+        {% if recent_failed_health %}
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead><tr><th>ID</th><th>Title</th><th>Assigned</th><th></th></tr></thead>
+              <tbody>
+                {% for t in recent_failed_health %}
+                  <tr>
+                    <td>#{{ t.id }}</td>
+                    <td>{{ t.issue_title }}</td>
+                    <td class="text-muted small">{% if t.assigned_technician %}{{ t.assigned_technician.name }}{% else %}Unassigned{% endif %}</td>
+                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_edit_ticket', ticket_id=t.id) }}">Edit</a></td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-muted small">No failed health checks.</div>
         {% endif %}
       </div>
     </div>

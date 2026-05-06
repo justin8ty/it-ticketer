@@ -5,7 +5,7 @@
     {% set tone = "success" %}
   {% elif v in ["PENDING_CONFIRMATION", "PENDING", "WAITING"] %}
     {% set tone = "warning" %}
-  {% elif v in ["REOPENED", "FAIL", "FAILED", "BLOCKED"] %}
+  {% elif v in ["REOPENED", "REJECTED", "FAIL", "FAILED", "BLOCKED"] %}
     {% set tone = "danger" %}
   {% elif v in ["IN_PROGRESS", "PASS", "PASSED"] %}
     {% set tone = "info" %}
@@ -20,7 +20,7 @@
 {% macro priority_chip(value) -%}
   {% set raw = value or "Unknown" %}
   {% set v = raw|upper %}
-  {% if v == "URGENT" %}
+  {% if v in ["URGENT", "CRITICAL"] %}
     {% set tone = "danger" %}
   {% elif v == "HIGH" %}
     {% set tone = "warning" %}
