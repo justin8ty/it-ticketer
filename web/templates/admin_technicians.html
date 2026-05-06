@@ -67,12 +67,12 @@
                 <td>#{{ t.id }}</td>
                 <td>{{ t.name }}</td>
                 <td class="text-muted small">{{ t.email }}</td>
-                <td><span class="badge text-bg-light">{{ t.skill_group }}</span></td>
+                <td><span class="status-chip">{{ t.skill_group }}</span></td>
                 <td>
                   {% if t.is_active %}
-                    <span class="badge text-bg-success">Yes</span>
+                    <span class="status-chip success">Active</span>
                   {% else %}
-                    <span class="badge text-bg-danger">No</span>
+                    <span class="status-chip danger">Inactive</span>
                   {% endif %}
                 </td>
                 <td class="text-end">

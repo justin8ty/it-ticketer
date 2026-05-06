@@ -1,4 +1,5 @@
 ﻿{% extends "base.html" %}
+{% import "_ui.html" as ui %}
 {% block content %}
 <div class="page-header">
   <div>
@@ -7,7 +8,7 @@
     <p class="text-muted mb-0">Review ticket progress, technician updates, proof of fix, and closure confirmation.</p>
   </div>
   <div class="text-md-end">
-    <span class="status-chip primary">{{ ticket.status }}</span>
+    {{ ui.status_chip(ticket.status) }}
     <div class="small text-muted mt-2">
       Created {{ ticket.created_at.strftime("%Y-%m-%d %H:%M") }} UTC<br>
       Updated {{ ticket.updated_at.strftime("%Y-%m-%d %H:%M") }} UTC
@@ -37,7 +38,7 @@
         <div class="col-md-4">
           <div class="verification-summary h-100">
             <div class="text-muted small">Priority</div>
-            <div class="fw-semibold">{{ ticket.priority }}</div>
+            {{ ui.priority_chip(ticket.priority) }}
           </div>
         </div>
         <div class="col-md-4">
@@ -109,7 +110,7 @@
           <div class="verification-step">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <div class="fw-semibold">Health check result</div>
-              {% if health %}<span class="status-chip {% if health.result == 'PASS' %}success{% else %}danger{% endif %}">{{ health.result }}</span>{% else %}<span class="status-chip warning">Not recorded</span>{% endif %}
+              {% if health %}{{ ui.status_chip(health.result) }}{% else %}<span class="status-chip warning">Not recorded</span>{% endif %}
             </div>
             {% if health %}
               <div class="small text-muted mb-2">Latest result recorded {{ health.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</div>

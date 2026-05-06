@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_ui.html" as ui %}
 {% block content %}
 <div class="page-header">
   <div>
@@ -59,10 +60,10 @@
                     <div class="fw-semibold text-dark">#{{ t.id }} · {{ t.issue_title }}</div>
                     <div class="text-muted small">{{ t.requester_email }}</div>
                   </div>
-                  <span class="status-chip">{{ t.priority }}</span>
+                  {{ ui.priority_chip(t.priority) }}
                 </div>
                 <div class="d-flex justify-content-between align-items-center mt-2">
-                  <span class="status-chip primary">{{ t.status }}</span>
+                  {{ ui.status_chip(t.status) }}
                   <span class="text-muted small">{{ t.updated_at.strftime("%Y-%m-%d %H:%M") }} UTC</span>
                 </div>
               </a>
@@ -91,8 +92,8 @@
           <div class="text-muted small">Tracking: <a href="{{ url_for('track', token=selected_ticket.tracking_token) }}" target="_blank">/t/{{ selected_ticket.tracking_token }}</a></div>
         </div>
         <div class="text-md-end">
-          <span class="status-chip primary">{{ selected_ticket.status }}</span>
-          <div class="small text-muted mt-2">Priority: {{ selected_ticket.priority }} · Category: {{ selected_ticket.category }}</div>
+          {{ ui.status_chip(selected_ticket.status) }}
+          <div class="small text-muted mt-2">Priority: {{ selected_ticket.priority|replace("_", " ")|title }} · Category: {{ selected_ticket.category }}</div>
         </div>
       </div>
 
@@ -189,8 +190,8 @@
           <div class="mb-3">
             <h3 class="h5 mb-2">Ticket properties</h3>
             <div class="verification-summary">
-              <div class="d-flex justify-content-between small mb-1"><span>Status</span><strong>{{ selected_ticket.status }}</strong></div>
-              <div class="d-flex justify-content-between small mb-1"><span>Priority</span><strong>{{ selected_ticket.priority }}</strong></div>
+              <div class="d-flex justify-content-between small mb-1"><span>Status</span>{{ ui.status_chip(selected_ticket.status) }}</div>
+              <div class="d-flex justify-content-between small mb-1"><span>Priority</span>{{ ui.priority_chip(selected_ticket.priority) }}</div>
               <div class="d-flex justify-content-between small"><span>Category</span><strong>{{ selected_ticket.category }}</strong></div>
             </div>
           </div>
@@ -249,9 +250,9 @@
                 {% if selected_ticket.closure_override %}
                   <span class="status-chip warning">Override</span>
                 {% elif health and health.result == "PASS" %}
-                  <span class="status-chip success">Passed</span>
+                  {{ ui.status_chip("PASS") }}
                 {% elif health and health.result == "FAIL" %}
-                  <span class="status-chip danger">Failed</span>
+                  {{ ui.status_chip("FAIL") }}
                 {% else %}
                   <span class="status-chip warning">Not recorded</span>
                 {% endif %}

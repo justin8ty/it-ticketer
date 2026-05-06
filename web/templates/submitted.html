@@ -1,4 +1,5 @@
 ﻿{% extends "base.html" %}
+{% import "_ui.html" as ui %}
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-lg-9">
@@ -9,7 +10,7 @@
           <h1 class="h3 mb-1">Keep your tracking link</h1>
           <p class="text-muted mb-0">Use this private link to review technician updates, proof of fix, and closure confirmation.</p>
         </div>
-        <span class="status-chip info">{{ ticket.status }}</span>
+        {{ ui.status_chip(ticket.status) }}
       </div>
 
       <div class="row g-3 mb-4">
@@ -63,7 +64,7 @@
             </div>
             <div class="col-md-4">
               <div class="text-muted small">Priority</div>
-              <div class="fw-semibold">{{ ticket.priority }}</div>
+              {{ ui.priority_chip(ticket.priority) }}
             </div>
             <div class="col-md-4">
               <div class="text-muted small">Assigned Technician</div>

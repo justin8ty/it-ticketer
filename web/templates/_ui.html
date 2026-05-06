@@ -1,0 +1,35 @@
+{% macro status_chip(value) -%}
+  {% set raw = value or "Unknown" %}
+  {% set v = raw|upper %}
+  {% if v == "CLOSED" %}
+    {% set tone = "success" %}
+  {% elif v in ["PENDING_CONFIRMATION", "PENDING", "WAITING"] %}
+    {% set tone = "warning" %}
+  {% elif v in ["REOPENED", "FAIL", "FAILED", "BLOCKED"] %}
+    {% set tone = "danger" %}
+  {% elif v in ["IN_PROGRESS", "PASS", "PASSED"] %}
+    {% set tone = "info" %}
+  {% elif v == "NEW" %}
+    {% set tone = "primary" %}
+  {% else %}
+    {% set tone = "" %}
+  {% endif %}
+  <span class="status-chip {{ tone }}">{{ raw|replace("_", " ")|title }}</span>
+{%- endmacro %}
+
+{% macro priority_chip(value) -%}
+  {% set raw = value or "Unknown" %}
+  {% set v = raw|upper %}
+  {% if v == "URGENT" %}
+    {% set tone = "danger" %}
+  {% elif v == "HIGH" %}
+    {% set tone = "warning" %}
+  {% elif v == "MEDIUM" %}
+    {% set tone = "info" %}
+  {% elif v == "LOW" %}
+    {% set tone = "success" %}
+  {% else %}
+    {% set tone = "" %}
+  {% endif %}
+  <span class="status-chip {{ tone }}">{{ raw|replace("_", " ")|title }}</span>
+{%- endmacro %}
