@@ -8,11 +8,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
-      <div class="container">
+    <nav class="navbar navbar-expand-lg app-navbar border-bottom">
+      <div class="container app-navbar-inner">
         {% set is_tech = current_user.is_authenticated and current_user.role == "tech" %}
         {% set is_admin = current_user.is_authenticated and current_user.role == "admin" %}
-        <a class="navbar-brand" href="{% if is_tech %}{{ url_for('tech_dashboard') }}{% elif is_admin %}{{ url_for('admin_dashboard') }}{% else %}{{ url_for('index') }}{% endif %}">
+        <a class="navbar-brand app-brand" href="{% if is_tech %}{{ url_for('tech_dashboard') }}{% elif is_admin %}{{ url_for('admin_dashboard') }}{% else %}{{ url_for('index') }}{% endif %}">
           {% if is_tech %}
             Technician Workspace
           {% elif is_admin %}
@@ -21,7 +21,7 @@
             IT Ticket System
           {% endif %}
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample" aria-controls="navbarsExample" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler app-navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample" aria-controls="navbarsExample" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -46,9 +46,9 @@
                 {{ current_user.name }}
               </span>
               {% if is_tech %}
-                <a class="btn btn-outline-warning btn-sm" href="{{ url_for('tech_logout') }}">Logout</a>
+                <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('tech_logout') }}">Logout</a>
               {% elif is_admin %}
-                <a class="btn btn-outline-warning btn-sm" href="{{ url_for('admin_logout') }}">Logout</a>
+                <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin_logout') }}">Logout</a>
               {% endif %}
             {% endif %}
           </div>
@@ -56,7 +56,7 @@
       </div>
     </nav>
 
-    <main class="container py-4">
+    <main class="container py-4 app-shell">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           {% for category, message in messages %}
@@ -69,7 +69,7 @@
       {% endwith %}
 
       {% block content %}{% endblock %}
-      <footer class="mt-5 pt-4 border-top text-muted small">
+      <footer class="mt-5 pt-4 border-top text-muted small app-footer">
         Not intended for public deployment without appropriate security hardening.
       </footer>
     </main>
