@@ -1,280 +1,133 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="page-header">
   <div>
-    <h1 class="h4 mb-0">Admin Monitoring Dashboard</h1>
-    <div class="text-muted small">Supervise ticket queues, technician workload, and exception cases.</div>
+    <div class="home-eyebrow">Admin monitoring</div>
+    <h1 class="h3 mb-1">Admin Monitoring Dashboard</h1>
+    <p class="text-muted mb-0">Supervise ticket queues, technician workload, and closure exception cases.</p>
   </div>
   <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin_technicians') }}">Manage Technicians</a>
 </div>
 
-<div class="row g-3 admin-metric-grid">
+<div class="row g-3 admin-metric-grid mb-4">
   <div class="col-md-6 col-xl-2">
-    <div class="card h-100 admin-metric-card">
-      <div class="card-body">
-        <div class="text-muted small">Total tickets</div>
-        <div class="fs-3 fw-semibold">{{ total }}</div>
-      </div>
+    <div class="metric-card h-100 p-3">
+      <div class="text-muted small">Total tickets</div>
+      <div class="fs-3 fw-semibold">{{ total }}</div>
     </div>
   </div>
   <div class="col-md-6 col-xl-2">
-    <div class="card h-100 admin-metric-card">
-      <div class="card-body">
-        <div class="text-muted small">Open tickets</div>
-        <div class="fs-3 fw-semibold">{{ open_count }}</div>
-      </div>
+    <div class="metric-card h-100 p-3">
+      <div class="text-muted small">Open tickets</div>
+      <div class="fs-3 fw-semibold">{{ open_count }}</div>
     </div>
   </div>
   <div class="col-md-6 col-xl-2">
-    <div class="card h-100 admin-metric-card metric-alert">
-      <div class="card-body">
-        <div class="text-muted small">Unassigned</div>
-        <div class="fs-3 fw-semibold">{{ unassigned_count }}</div>
-      </div>
+    <div class="metric-card h-100 p-3 admin-metric-card metric-alert">
+      <div class="text-muted small">Unassigned</div>
+      <div class="fs-3 fw-semibold">{{ unassigned_count }}</div>
     </div>
   </div>
   <div class="col-md-6 col-xl-2">
-    <div class="card h-100 admin-metric-card metric-alert">
-      <div class="card-body">
-        <div class="text-muted small">Pending confirmation</div>
-        <div class="fs-3 fw-semibold">{{ pending_confirmation_count }}</div>
-      </div>
+    <div class="metric-card h-100 p-3 admin-metric-card metric-alert">
+      <div class="text-muted small">Pending confirmation</div>
+      <div class="fs-3 fw-semibold">{{ pending_confirmation_count }}</div>
     </div>
   </div>
   <div class="col-md-6 col-xl-2">
-    <div class="card h-100 admin-metric-card metric-warning">
-      <div class="card-body">
-        <div class="text-muted small">High priority open</div>
-        <div class="fs-3 fw-semibold">{{ high_priority_count }}</div>
-      </div>
+    <div class="metric-card h-100 p-3 admin-metric-card metric-warning">
+      <div class="text-muted small">High priority open</div>
+      <div class="fs-3 fw-semibold">{{ high_priority_count }}</div>
     </div>
   </div>
   <div class="col-md-6 col-xl-2">
-    <div class="card h-100 admin-metric-card">
-      <div class="card-body">
-        <div class="text-muted small">Active technicians</div>
-        <div class="fs-3 fw-semibold">{{ active_technicians }}/{{ techs|length }}</div>
-      </div>
+    <div class="metric-card h-100 p-3">
+      <div class="text-muted small">Closure overrides</div>
+      <div class="fs-3 fw-semibold">{{ override_count }}</div>
     </div>
   </div>
 </div>
 
-<div class="row g-3 mt-1">
+<div class="row g-3 mb-4">
   <div class="col-lg-4">
-    <div class="card h-100">
-      <div class="card-body">
-        <h2 class="h6">Tickets by Status</h2>
-        {% if status_breakdown %}
-          <div class="list-group list-group-flush small">
-            {% for item in status_breakdown %}
-              <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                <span>{{ item.label }}</span>
-                <span class="badge text-bg-secondary">{{ item.count }}</span>
-              </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="text-muted small">No status data available.</div>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-
-  <div class="col-lg-4">
-    <div class="card h-100">
-      <div class="card-body">
-        <h2 class="h6">Tickets by Priority</h2>
-        {% if priority_breakdown %}
-          <div class="list-group list-group-flush small">
-            {% for item in priority_breakdown %}
-              <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                <span>{{ item.label }}</span>
-                <span class="badge text-bg-secondary">{{ item.count }}</span>
-              </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="text-muted small">No priority data available.</div>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-
-  <div class="col-lg-4">
-    <div class="card h-100">
-      <div class="card-body">
-        <h2 class="h6">Tickets by Category</h2>
-        {% if category_breakdown %}
-          <div class="list-group list-group-flush small">
-            {% for item in category_breakdown %}
-              <div class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                <span>{{ item.label }}</span>
-                <span class="badge text-bg-secondary">{{ item.count }}</span>
-              </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="text-muted small">No category data available.</div>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="card mt-4">
-  <div class="card-body">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2 class="h6 mb-0">Technician Workload</h2>
-      <div class="text-muted small">Open assigned tickets only</div>
-    </div>
-    {% if technician_workload %}
-      <div class="table-responsive">
-        <table class="table table-sm align-middle mb-0">
-          <thead>
-            <tr>
-              <th>Technician</th>
-              <th>Skill</th>
-              <th>Availability</th>
-              <th>Open</th>
-              <th>High Priority</th>
-              <th>Pending Confirmation</th>
-              <th>Latest Update</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for item in technician_workload %}
-              <tr>
-                <td>
-                  <div class="fw-semibold">{{ item.tech.name }}</div>
-                  <div class="text-muted small">{{ item.tech.email }}</div>
-                </td>
-                <td><span class="badge text-bg-light">{{ item.tech.skill_group }}</span></td>
-                <td>
-                  {% if item.tech.is_active %}
-                    <span class="badge text-bg-success">{{ item.tech.availability }}</span>
-                  {% else %}
-                    <span class="badge text-bg-danger">Inactive</span>
-                  {% endif %}
-                </td>
-                <td>{{ item.open_count }}</td>
-                <td>{{ item.high_priority_count }}</td>
-                <td>{{ item.pending_confirmation_count }}</td>
-                <td class="text-muted small">
-                  {% if item.latest_update %}{{ item.latest_update.strftime("%Y-%m-%d %H:%M") }} UTC{% else %}—{% endif %}
-                </td>
-                <td class="text-end">
-                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_edit_technician', tech_id=item.tech.id) }}">Edit</a>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <div class="text-muted small">No technicians available.</div>
-    {% endif %}
-  </div>
-</div>
-
-<div class="row g-3 mt-1">
-  <div class="col-xl-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="h6 mb-0">Unassigned Tickets</h2>
-          <span class="badge text-bg-warning">{{ unassigned_count }}</span>
+    <div class="panel h-100">
+      <h2 class="h6 mb-3">Tickets by Status</h2>
+      {% if status_breakdown %}
+        <div class="list-group list-group-flush small">
+          {% for item in status_breakdown %}
+            <div class="list-group-item px-0 d-flex justify-content-between align-items-center bg-transparent">
+              <span>{{ item.label }}</span>
+              <span class="status-chip primary">{{ item.count }}</span>
+            </div>
+          {% endfor %}
         </div>
-        {% if recent_unassigned %}
-          <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Title</th>
-                  <th>Priority</th>
-                  <th>Created</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for t in recent_unassigned %}
-                  <tr>
-                    <td>#{{ t.id }}</td>
-                    <td>{{ t.issue_title }}</td>
-                    <td><span class="badge text-bg-light">{{ t.priority }}</span></td>
-                    <td class="text-muted small">{{ t.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</td>
-                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_edit_ticket', ticket_id=t.id) }}">Edit</a></td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <div class="text-muted small">No unassigned open tickets.</div>
-        {% endif %}
-      </div>
+      {% else %}
+        <div class="text-muted small">No status data available.</div>
+      {% endif %}
     </div>
   </div>
 
-  <div class="col-xl-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="h6 mb-0">High Priority Open Tickets</h2>
-          <span class="badge text-bg-danger">{{ high_priority_count }}</span>
+  <div class="col-lg-4">
+    <div class="panel h-100">
+      <h2 class="h6 mb-3">Tickets by Priority</h2>
+      {% if priority_breakdown %}
+        <div class="list-group list-group-flush small">
+          {% for item in priority_breakdown %}
+            <div class="list-group-item px-0 d-flex justify-content-between align-items-center bg-transparent">
+              <span>{{ item.label }}</span>
+              <span class="status-chip">{{ item.count }}</span>
+            </div>
+          {% endfor %}
         </div>
-        {% if recent_high_priority %}
-          <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Title</th>
-                  <th>Status</th>
-                  <th>Assigned</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for t in recent_high_priority %}
-                  <tr>
-                    <td>#{{ t.id }}</td>
-                    <td>{{ t.issue_title }}</td>
-                    <td><span class="badge text-bg-secondary">{{ t.status }}</span></td>
-                    <td class="text-muted small">{% if t.assigned_technician %}{{ t.assigned_technician.name }}{% else %}Unassigned{% endif %}</td>
-                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_edit_ticket', ticket_id=t.id) }}">Edit</a></td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <div class="text-muted small">No high priority open tickets.</div>
-        {% endif %}
-      </div>
+      {% else %}
+        <div class="text-muted small">No priority data available.</div>
+      {% endif %}
     </div>
   </div>
 
-  <div class="col-xl-6">
-    <div class="card h-100">
-      <div class="card-body">
+  <div class="col-lg-4">
+    <div class="panel h-100">
+      <h2 class="h6 mb-3">Tickets by Category</h2>
+      {% if category_breakdown %}
+        <div class="list-group list-group-flush small">
+          {% for item in category_breakdown %}
+            <div class="list-group-item px-0 d-flex justify-content-between align-items-center bg-transparent">
+              <span>{{ item.label }}</span>
+              <span class="status-chip">{{ item.count }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-muted small">No category data available.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="panel mb-4">
+  <div class="d-flex justify-content-between align-items-start gap-3 mb-3 flex-wrap">
+    <div>
+      <h2 class="h5 mb-1">Closure Exceptions</h2>
+      <p class="text-muted small mb-0">Cases that need supervision before normal closure can continue.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <span class="status-chip warning">{{ pending_confirmation_count }} waiting</span>
+      <span class="status-chip danger">{{ stale_count }} stale</span>
+      <span class="status-chip">{{ override_count }} overrides</span>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-xl-6">
+      <div class="verification-step h-100">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="h6 mb-0">Awaiting Requester Confirmation</h2>
-          <span class="badge text-bg-warning">{{ pending_confirmation_count }}</span>
+          <h3 class="h6 mb-0">Awaiting Requester Confirmation</h3>
+          <span class="status-chip warning">{{ pending_confirmation_count }}</span>
         </div>
         {% if recent_pending_confirmation %}
           <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Title</th>
-                  <th>Assigned</th>
-                  <th>Override</th>
-                  <th></th>
-                </tr>
-              </thead>
+              <thead><tr><th>ID</th><th>Title</th><th>Assigned</th><th>Override</th><th></th></tr></thead>
               <tbody>
                 {% for t in recent_pending_confirmation %}
                   <tr>
@@ -283,9 +136,9 @@
                     <td class="text-muted small">{% if t.assigned_technician %}{{ t.assigned_technician.name }}{% else %}Unassigned{% endif %}</td>
                     <td>
                       {% if t.closure_override %}
-                        <span class="badge text-bg-warning">Enabled</span>
+                        <span class="status-chip warning">Enabled</span>
                       {% else %}
-                        <form class="d-flex gap-2 justify-content-end" method="post" action="{{ url_for('admin_override', ticket_id=t.id) }}">
+                        <form class="d-flex gap-2" method="post" action="{{ url_for('admin_override', ticket_id=t.id) }}">
                           <input class="form-control form-control-sm" name="reason" placeholder="Reason..." required>
                           <button class="btn btn-sm btn-outline-warning" type="submit">Override</button>
                         </form>
@@ -302,34 +155,24 @@
         {% endif %}
       </div>
     </div>
-  </div>
 
-  <div class="col-xl-6">
-    <div class="card h-100">
-      <div class="card-body">
+    <div class="col-xl-6">
+      <div class="verification-step h-100">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="h6 mb-0">Stale Open Tickets</h2>
-          <span class="badge text-bg-secondary">{{ stale_count }}</span>
+          <h3 class="h6 mb-0">Stale Open Tickets</h3>
+          <span class="status-chip danger">{{ stale_count }}</span>
         </div>
         <div class="text-muted small mb-2">No update for more than 3 days.</div>
         {% if recent_stale %}
           <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Title</th>
-                  <th>Status</th>
-                  <th>Last Update</th>
-                  <th></th>
-                </tr>
-              </thead>
+              <thead><tr><th>ID</th><th>Title</th><th>Status</th><th>Last Update</th><th></th></tr></thead>
               <tbody>
                 {% for t in recent_stale %}
                   <tr>
                     <td>#{{ t.id }}</td>
                     <td>{{ t.issue_title }}</td>
-                    <td><span class="badge text-bg-secondary">{{ t.status }}</span></td>
+                    <td><span class="status-chip primary">{{ t.status }}</span></td>
                     <td class="text-muted small">{{ t.updated_at.strftime("%Y-%m-%d %H:%M") }} UTC</td>
                     <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_edit_ticket', ticket_id=t.id) }}">Edit</a></td>
                   </tr>
@@ -345,55 +188,132 @@
   </div>
 </div>
 
-<div class="card mt-4">
-  <div class="card-body">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2 class="h6 mb-0">Recent Tickets</h2>
-      <div class="text-muted small">Latest submitted requests</div>
-    </div>
-    {% if recent %}
-      <div class="table-responsive">
-        <table class="table table-sm align-middle">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Title</th>
-              <th>Status</th>
-              <th>Assigned</th>
-              <th>Override</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for t in recent %}
-              <tr>
-                <td>#{{ t.id }}</td>
-                <td>{{ t.issue_title }}</td>
-                <td><span class="badge text-bg-secondary">{{ t.status }}</span></td>
-                <td class="text-muted small">
-                  {% if t.assigned_technician %}{{ t.assigned_technician.name }}{% else %}Unassigned{% endif %}
-                </td>
-                <td>
-                  {% if t.closure_override %}
-                    <span class="badge text-bg-warning">Enabled</span>
-                  {% else %}
-                    <form class="d-flex gap-2" method="post" action="{{ url_for('admin_override', ticket_id=t.id) }}">
-                      <input class="form-control form-control-sm" name="reason" placeholder="Reason..." required>
-                      <button class="btn btn-sm btn-outline-warning" type="submit">Override</button>
-                    </form>
-                  {% endif %}
-                </td>
-                <td class="text-end">
-                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_edit_ticket', ticket_id=t.id) }}">Edit</a>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <div class="text-muted">No tickets yet.</div>
-    {% endif %}
+<div class="panel mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h2 class="h5 mb-0">Technician Workload</h2>
+    <div class="text-muted small">{{ active_technicians }}/{{ techs|length }} active technicians · open assigned tickets only</div>
   </div>
+  {% if technician_workload %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr><th>Technician</th><th>Skill</th><th>Availability</th><th>Open</th><th>High Priority</th><th>Pending Confirmation</th><th>Latest Update</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for item in technician_workload %}
+            <tr>
+              <td><div class="fw-semibold">{{ item.tech.name }}</div><div class="text-muted small">{{ item.tech.email }}</div></td>
+              <td><span class="status-chip">{{ item.tech.skill_group }}</span></td>
+              <td>{% if item.tech.is_active %}<span class="status-chip success">{{ item.tech.availability }}</span>{% else %}<span class="status-chip danger">Inactive</span>{% endif %}</td>
+              <td>{{ item.open_count }}</td>
+              <td>{{ item.high_priority_count }}</td>
+              <td>{{ item.pending_confirmation_count }}</td>
+              <td class="text-muted small">{% if item.latest_update %}{{ item.latest_update.strftime("%Y-%m-%d %H:%M") }} UTC{% else %}—{% endif %}</td>
+              <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_edit_technician', tech_id=item.tech.id) }}">Edit</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="text-muted small">No technicians available.</div>
+  {% endif %}
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-xl-6">
+    <div class="panel h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h6 mb-0">Unassigned Tickets</h2>
+        <span class="status-chip warning">{{ unassigned_count }}</span>
+      </div>
+      {% if recent_unassigned %}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>ID</th><th>Title</th><th>Priority</th><th>Created</th><th></th></tr></thead>
+            <tbody>
+              {% for t in recent_unassigned %}
+                <tr>
+                  <td>#{{ t.id }}</td>
+                  <td>{{ t.issue_title }}</td>
+                  <td><span class="status-chip">{{ t.priority }}</span></td>
+                  <td class="text-muted small">{{ t.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</td>
+                  <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_edit_ticket', ticket_id=t.id) }}">Edit</a></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-muted small">No unassigned open tickets.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-xl-6">
+    <div class="panel h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h6 mb-0">High Priority Open Tickets</h2>
+        <span class="status-chip danger">{{ high_priority_count }}</span>
+      </div>
+      {% if recent_high_priority %}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>ID</th><th>Title</th><th>Status</th><th>Assigned</th><th></th></tr></thead>
+            <tbody>
+              {% for t in recent_high_priority %}
+                <tr>
+                  <td>#{{ t.id }}</td>
+                  <td>{{ t.issue_title }}</td>
+                  <td><span class="status-chip primary">{{ t.status }}</span></td>
+                  <td class="text-muted small">{% if t.assigned_technician %}{{ t.assigned_technician.name }}{% else %}Unassigned{% endif %}</td>
+                  <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_edit_ticket', ticket_id=t.id) }}">Edit</a></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-muted small">No high priority open tickets.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h2 class="h5 mb-0">Recent Tickets</h2>
+    <div class="text-muted small">Latest submitted requests</div>
+  </div>
+  {% if recent %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead><tr><th>ID</th><th>Title</th><th>Status</th><th>Assigned</th><th>Override</th><th></th></tr></thead>
+        <tbody>
+          {% for t in recent %}
+            <tr>
+              <td>#{{ t.id }}</td>
+              <td>{{ t.issue_title }}</td>
+              <td><span class="status-chip primary">{{ t.status }}</span></td>
+              <td class="text-muted small">{% if t.assigned_technician %}{{ t.assigned_technician.name }}{% else %}Unassigned{% endif %}</td>
+              <td>
+                {% if t.closure_override %}
+                  <span class="status-chip warning">Enabled</span>
+                {% else %}
+                  <form class="d-flex gap-2" method="post" action="{{ url_for('admin_override', ticket_id=t.id) }}">
+                    <input class="form-control form-control-sm" name="reason" placeholder="Reason..." required>
+                    <button class="btn btn-sm btn-outline-warning" type="submit">Override</button>
+                  </form>
+                {% endif %}
+              </td>
+              <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_edit_ticket', ticket_id=t.id) }}">Edit</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="text-muted">No tickets yet.</div>
+  {% endif %}
 </div>
 {% endblock %}
