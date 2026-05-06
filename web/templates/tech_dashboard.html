@@ -344,16 +344,121 @@
               <div class="d-flex justify-content-between small mb-1"><span>Health check</span><strong>{% if selected_ticket.closure_override %}Override{% elif health %}{{ health.result }}{% else %}Missing{% endif %}</strong></div>
               <div class="d-flex justify-content-between small mb-1"><span>Requester confirmation</span><strong>{% if confirmation_done %}Signed{% elif closure and closure.status == "REJECTED" %}Rejected{% elif confirmation_waiting %}Pending{% else %}Not requested{% endif %}</strong></div>
               <div class="d-flex justify-content-between small mb-3"><span>Override</span><strong>{% if selected_ticket.closure_override %}Yes{% else %}No{% endif %}</strong></div>
+              <button class="btn btn-dark btn-sm w-100" type="button" data-bs-toggle="modal" data-bs-target="#closeReviewModal{{ selected_ticket.id }}">
+                Review Closure
+              </button>
+            </section>
+          </div>
+        </aside>
+      </div>
+
+      <div class="modal fade" id="closeReviewModal{{ selected_ticket.id }}" tabindex="-1" aria-labelledby="closeReviewModalLabel{{ selected_ticket.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header">
+              <div>
+                <div class="home-eyebrow">Final closure review</div>
+                <h2 class="modal-title h5" id="closeReviewModalLabel{{ selected_ticket.id }}">Review Ticket #{{ selected_ticket.id }} before closing</h2>
+              </div>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p class="text-muted small">Check the required closure evidence before changing the ticket status to closed.</p>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <div class="verification-summary h-100">
+                    <div class="text-muted small">Ticket</div>
+                    <div class="fw-semibold">#{{ selected_ticket.id }} · {{ selected_ticket.issue_title }}</div>
+                    <div class="small text-muted mt-1">Requester: {{ selected_ticket.requester_name }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="verification-summary h-100">
+                    <div class="text-muted small">Technician</div>
+                    <div class="fw-semibold">{{ current_user.name }}</div>
+                    <div class="small text-muted mt-1">Review date: current session</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="list-group mb-3">
+                <div class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                  <div>
+                    <div class="fw-semibold">Proof of fix</div>
+                    <div class="small text-muted">At least one proof file should be uploaded.</div>
+                  </div>
+                  {% if proof_done %}<span class="status-chip success">Uploaded</span>{% else %}<span class="status-chip danger">Missing</span>{% endif %}
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                  <div>
+                    <div class="fw-semibold">Health check</div>
+                    <div class="small text-muted">Requires PASS or an admin override.</div>
+                  </div>
+                  {% if selected_ticket.closure_override %}
+                    <span class="status-chip warning">Override</span>
+                  {% elif health %}
+                    {{ ui.status_chip(health.result) }}
+                  {% else %}
+                    <span class="status-chip danger">Missing</span>
+                  {% endif %}
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                  <div>
+                    <div class="fw-semibold">Requester confirmation</div>
+                    <div class="small text-muted">Requester must sign unless the ticket is still pending/rejected.</div>
+                  </div>
+                  {% if confirmation_done %}
+                    <span class="status-chip success">Signed</span>
+                  {% elif closure and closure.status == "REJECTED" %}
+                    <span class="status-chip danger">Rejected</span>
+                  {% elif confirmation_waiting %}
+                    <span class="status-chip warning">Pending</span>
+                  {% else %}
+                    <span class="status-chip danger">Not requested</span>
+                  {% endif %}
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                  <div>
+                    <div class="fw-semibold">Admin override</div>
+                    <div class="small text-muted">Used only when normal verification cannot be completed.</div>
+                  </div>
+                  {% if selected_ticket.closure_override %}<span class="status-chip warning">Yes</span>{% else %}<span class="status-chip">No</span>{% endif %}
+                </div>
+              </div>
+
+              {% if proof_files %}
+                <h3 class="h6">Proof files</h3>
+                <div class="d-grid gap-2 mb-3">
+                  {% for a in proof_files %}
+                    <div class="verification-summary bg-white small">
+                      <div><a href="{{ url_for('download_attachment', attachment_id=a.id) }}">{{ a.filename }}</a></div>
+                      {% if a.description %}<div class="mt-1">{{ a.description }}</div>{% endif %}
+                      <div class="text-muted">Uploaded {{ a.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</div>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+
+              {% if closure and closure.status == "REJECTED" and closure.rejection_reason %}
+                <div class="alert alert-warning small mb-0">
+                  <div class="fw-semibold">Requester rejection reason</div>
+                  <div>{{ closure.rejection_reason }}</div>
+                </div>
+              {% endif %}
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Back to ticket</button>
               <form method="post" action="{{ url_for('tech_ticket', ticket_id=selected_ticket.id) }}">
                 <input type="hidden" name="action" value="update_status">
                 <input type="hidden" name="status" value="CLOSED">
                 <input type="hidden" name="return_status" value="{{ status }}">
                 <input type="hidden" name="return_q" value="{{ q }}">
-                <button class="btn btn-dark btn-sm w-100" type="submit">Close Ticket</button>
+                <button class="btn btn-dark" type="submit">Close Ticket</button>
               </form>
-            </section>
+            </div>
           </div>
-        </aside>
+        </div>
       </div>
     {% else %}
       <div class="panel text-center py-5">
