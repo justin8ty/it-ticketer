@@ -1,53 +1,64 @@
 ﻿{% extends "base.html" %}
 {% block content %}
-<div class="row">
-  <div class="col-lg-8">
-    <div class="p-4 rounded-4 border bg-white">
-      <div class="d-flex justify-content-between align-items-start">
-        <div>
-          <h1 class="h4 mb-1">Ticket #{{ ticket.id }}</h1>
-          <div class="text-muted">Status: <span class="badge text-bg-secondary">{{ ticket.status }}</span></div>
-        </div>
-        <div class="text-end small text-muted">
-          Created: {{ ticket.created_at.strftime("%Y-%m-%d %H:%M") }} UTC<br>
-          Updated: {{ ticket.updated_at.strftime("%Y-%m-%d %H:%M") }} UTC
-        </div>
-      </div>
+<div class="page-header">
+  <div>
+    <div class="home-eyebrow">Requester tracking</div>
+    <h1 class="h3 mb-1">Ticket #{{ ticket.id }}</h1>
+    <p class="text-muted mb-0">Review ticket progress, technician updates, proof of fix, and closure confirmation.</p>
+  </div>
+  <div class="text-md-end">
+    <span class="status-chip primary">{{ ticket.status }}</span>
+    <div class="small text-muted mt-2">
+      Created {{ ticket.created_at.strftime("%Y-%m-%d %H:%M") }} UTC<br>
+      Updated {{ ticket.updated_at.strftime("%Y-%m-%d %H:%M") }} UTC
+    </div>
+  </div>
+</div>
 
-      <hr>
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="panel mb-3">
+      <h2 class="h5 mb-3">Issue summary</h2>
       <div class="mb-3">
         <div class="text-muted small">Issue Title</div>
-        <div class="fw-semibold">{{ ticket.issue_title }}</div>
+        <div class="fw-semibold fs-5">{{ ticket.issue_title }}</div>
       </div>
       <div class="mb-3">
         <div class="text-muted small">Description</div>
         <div style="white-space: pre-wrap;">{{ ticket.description }}</div>
       </div>
-
       <div class="row g-3">
         <div class="col-md-4">
-          <div class="text-muted small">Category</div>
-          <div class="fw-semibold">{{ ticket.category }}</div>
+          <div class="verification-summary h-100">
+            <div class="text-muted small">Category</div>
+            <div class="fw-semibold">{{ ticket.category }}</div>
+          </div>
         </div>
         <div class="col-md-4">
-          <div class="text-muted small">Priority</div>
-          <div class="fw-semibold">{{ ticket.priority }}</div>
+          <div class="verification-summary h-100">
+            <div class="text-muted small">Priority</div>
+            <div class="fw-semibold">{{ ticket.priority }}</div>
+          </div>
         </div>
         <div class="col-md-4">
-          <div class="text-muted small">Assigned Technician</div>
-          <div class="fw-semibold">
-            {% if ticket.assigned_technician %}{{ ticket.assigned_technician.name }}{% else %}Unassigned{% endif %}
+          <div class="verification-summary h-100">
+            <div class="text-muted small">Assigned Technician</div>
+            <div class="fw-semibold">{% if ticket.assigned_technician %}{{ ticket.assigned_technician.name }}{% else %}Unassigned{% endif %}</div>
           </div>
         </div>
       </div>
+    </div>
 
-      <hr>
-      <h2 class="h6">Public Updates</h2>
+    <div class="panel mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">Public updates</h2>
+        {% if public_msgs %}<span class="status-chip info">{{ public_msgs|length }} update{% if public_msgs|length != 1 %}s{% endif %}</span>{% endif %}
+      </div>
       {% if public_msgs %}
-        <div class="list-group mb-3">
+        <div class="list-group list-group-flush">
           {% for m in public_msgs %}
-            <div class="list-group-item">
-              <div class="d-flex justify-content-between">
+            <div class="list-group-item px-0">
+              <div class="d-flex justify-content-between gap-3">
                 <div class="fw-semibold">{{ m.author_role }}</div>
                 <div class="text-muted small">{{ m.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</div>
               </div>
@@ -56,83 +67,88 @@
           {% endfor %}
         </div>
       {% else %}
-        <div class="text-muted small mb-3">No messages yet.</div>
+        <div class="text-muted small">No public messages yet.</div>
       {% endif %}
+    </div>
 
-      <hr>
-      <h2 class="h6">Attachments</h2>
+    <div class="panel">
+      <h2 class="h5 mb-3">Files and verification</h2>
       <div class="row g-3">
         <div class="col-md-6">
-          <div class="fw-semibold small mb-1">Submitted Attachments</div>
-          {% if issue_files %}
-            <ul class="list-unstyled mb-0">
-              {% for a in issue_files %}
-                <li>
-                  <a href="{{ url_for('download_attachment', attachment_id=a.id) }}">{{ a.filename }}</a>
-                  <span class="text-muted small"> (SHA-256: {{ a.sha256[:10] }}...)</span>
-                </li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <div class="text-muted small">None</div>
-          {% endif %}
+          <div class="verification-step h-100">
+            <div class="fw-semibold mb-2">Submitted attachments</div>
+            {% if issue_files %}
+              <ul class="list-unstyled mb-0 small">
+                {% for a in issue_files %}
+                  <li class="mb-1"><a href="{{ url_for('download_attachment', attachment_id=a.id) }}">{{ a.filename }}</a> <span class="text-muted">SHA-256: {{ a.sha256[:10] }}...</span></li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <div class="text-muted small">None</div>
+            {% endif %}
+          </div>
         </div>
         <div class="col-md-6">
-          <div class="fw-semibold small mb-1">Proof of Resolution</div>
-          {% if proof_files %}
-            <ul class="list-unstyled mb-0">
-              {% for a in proof_files %}
-                <li>
-                  <a href="{{ url_for('download_attachment', attachment_id=a.id) }}">{{ a.filename }}</a>
-                  <span class="text-muted small"> (SHA-256: {{ a.sha256[:10] }}...)</span>
-                </li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <div class="text-muted small">Not uploaded yet</div>
-          {% endif %}
+          <div class="verification-step h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="fw-semibold">Proof of Fix</div>
+              {% if proof_files %}<span class="status-chip success">Uploaded</span>{% else %}<span class="status-chip warning">Waiting</span>{% endif %}
+            </div>
+            {% if proof_files %}
+              <ul class="list-unstyled mb-0 small">
+                {% for a in proof_files %}
+                  <li class="mb-1"><a href="{{ url_for('download_attachment', attachment_id=a.id) }}">{{ a.filename }}</a> <span class="text-muted">SHA-256: {{ a.sha256[:10] }}...</span></li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <div class="text-muted small">The technician has not uploaded proof yet.</div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="verification-step">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="fw-semibold">Health check result</div>
+              {% if health %}<span class="status-chip {% if health.result == 'PASS' %}success{% else %}danger{% endif %}">{{ health.result }}</span>{% else %}<span class="status-chip warning">Not recorded</span>{% endif %}
+            </div>
+            {% if health %}
+              <div class="small text-muted mb-2">Latest result recorded {{ health.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</div>
+              {% if health_display and (health_display.type == "qa" or health_display.type == "kv" or health_display.type == "list") %}
+                <div class="list-group">
+                  {% for item in health_display.questions %}
+                    <div class="list-group-item">
+                      <div class="fw-semibold small">{{ item.question }}</div>
+                      <div class="small text-muted">{{ item.answer or "No response recorded" }}</div>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% elif health_display and health_display.type == "raw" %}
+                <pre class="p-3 bg-white border rounded small mb-0">{{ health_display.raw }}</pre>
+              {% endif %}
+            {% else %}
+              <div class="text-muted small">No verification checklist has been recorded yet.</div>
+            {% endif %}
+          </div>
         </div>
       </div>
-
-      <hr>
-      <h2 class="h6">Verification Checklist</h2>
-      {% if health %}
-        <div class="small text-muted">
-          Latest result: <span class="badge text-bg-success">{{ health.result }}</span>
-          ({{ health.created_at.strftime("%Y-%m-%d %H:%M") }} UTC)
-        </div>
-        {% if health_display and (health_display.type == "qa" or health_display.type == "kv" or health_display.type == "list") %}
-          <div class="list-group mt-2">
-            {% for item in health_display.questions %}
-              <div class="list-group-item">
-                <div class="fw-semibold small">{{ item.question }}</div>
-                <div class="small text-muted">{{ item.answer or "No response recorded" }}</div>
-              </div>
-            {% endfor %}
-          </div>
-        {% elif health_display and health_display.type == "raw" %}
-          <pre class="p-3 bg-light border rounded small mb-0">{{ health_display.raw }}</pre>
-        {% endif %}
-      {% else %}
-        <div class="text-muted small">No health check recorded yet.</div>
-      {% endif %}
     </div>
   </div>
 
   <div class="col-lg-4">
-    <div class="p-4 rounded-4 border bg-body-tertiary">
-      <h2 class="h6">Closure Confirmation</h2>
-
+    <div class="sidebar-panel sticky-lg-top" style="top: 1rem;">
+      <h2 class="h5 mb-3">Closure confirmation</h2>
       {% if ticket.status == "CLOSED" %}
-        <div class="alert alert-success mb-0">This ticket has been closed.</div>
+        <div class="alert alert-success mb-3">This ticket has been closed.</div>
       {% elif closure and closure.status == "CONFIRMED" %}
-        <div class="alert alert-success">
-          Confirmed at {{ closure.confirmed_at.strftime("%Y-%m-%d %H:%M") }} UTC.
-        </div>
+        <div class="alert alert-success mb-3">Confirmed at {{ closure.confirmed_at.strftime("%Y-%m-%d %H:%M") }} UTC.</div>
       {% elif closure and closure.status == "PENDING" %}
-        <p class="text-muted small mb-2">
-          A closure confirmation has been requested. Please sign below to confirm resolution.
-        </p>
+        <div class="verification-summary mb-3">
+          <div class="fw-semibold mb-2">Final review before signing</div>
+          <div class="d-flex justify-content-between small mb-1"><span>Proof of fix</span><span>{% if proof_files %}Uploaded{% else %}Missing{% endif %}</span></div>
+          <div class="d-flex justify-content-between small mb-1"><span>Health check</span><span>{% if health %}{{ health.result }}{% else %}Not recorded{% endif %}</span></div>
+          <div class="d-flex justify-content-between small"><span>Requester confirmation</span><span>Waiting</span></div>
+        </div>
+        <p class="text-muted small mb-2">A closure confirmation has been requested. Please sign only if the issue is resolved.</p>
         <form method="post">
           <input type="hidden" name="action" value="confirm_esign">
           <label class="form-label small">Electronic signature</label>
@@ -142,19 +158,17 @@
           <input type="hidden" name="signature_data" id="signatureData">
           <div class="d-flex gap-2 mt-2">
             <button class="btn btn-outline-secondary btn-sm" type="button" id="clearSignature">Clear</button>
-            <button class="btn btn-primary btn-sm" type="submit">Confirm Closure</button>
+            <button class="btn btn-primary btn-sm" type="submit">Confirm closure</button>
           </div>
         </form>
       {% else %}
-        <p class="text-muted small mb-0">
-          Closure confirmation has not yet been requested.
-        </p>
+        <div class="verification-summary">
+          <div class="fw-semibold">No confirmation requested yet</div>
+          <p class="text-muted small mb-0 mt-1">The technician will request confirmation after proof of fix and verification are ready.</p>
+        </div>
       {% endif %}
-
       <hr>
-      <div class="small text-muted">
-        Tracking token: <code>{{ ticket.tracking_token }}</code>
-      </div>
+      <div class="small text-muted">Tracking token: <code>{{ ticket.tracking_token }}</code></div>
     </div>
   </div>
 </div>
@@ -175,10 +189,7 @@ if (signaturePad) {
 
   function getPoint(event) {
     const rect = signaturePad.getBoundingClientRect();
-    return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
-    };
+    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   }
 
   function startDraw(event) {
@@ -199,9 +210,7 @@ if (signaturePad) {
     ctx.stroke();
   }
 
-  function endDraw() {
-    isDrawing = false;
-  }
+  function endDraw() { isDrawing = false; }
 
   signaturePad.addEventListener("pointerdown", startDraw);
   signaturePad.addEventListener("pointermove", moveDraw);
@@ -226,11 +235,7 @@ if (signaturePad) {
     form.addEventListener("submit", () => {
       const dataField = document.getElementById("signatureData");
       if (!dataField) return;
-      if (!hasDrawing) {
-        dataField.value = "";
-        return;
-      }
-      dataField.value = signaturePad.toDataURL("image/png");
+      dataField.value = hasDrawing ? signaturePad.toDataURL("image/png") : "";
     });
   }
 }

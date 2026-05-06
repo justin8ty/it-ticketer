@@ -2,37 +2,58 @@
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-lg-9">
-    <div class="p-4 rounded-4 border bg-body-tertiary">
-      <h1 class="h4">Ticket Submitted</h1>
-      <p class="mb-3">Please retain the tracking link. It is required to review status updates and confirm closure.</p>
+    <div class="panel">
+      <div class="page-header">
+        <div>
+          <div class="home-eyebrow">Ticket submitted</div>
+          <h1 class="h3 mb-1">Keep your tracking link</h1>
+          <p class="text-muted mb-0">Use this private link to review technician updates, proof of fix, and closure confirmation.</p>
+        </div>
+        <span class="status-chip info">{{ ticket.status }}</span>
+      </div>
 
-      <div class="row g-3">
+      <div class="row g-3 mb-4">
         <div class="col-md-4">
-          <div class="card">
-            <div class="card-body">
-              <div class="text-muted small">Ticket ID</div>
-              <div class="fs-4 fw-semibold">#{{ ticket.id }}</div>
-              <div class="text-muted small">Status: {{ ticket.status }}</div>
-            </div>
+          <div class="verification-summary h-100 bg-white">
+            <div class="text-muted small">Ticket ID</div>
+            <div class="fs-3 fw-semibold">#{{ ticket.id }}</div>
+            <div class="small text-muted">Created successfully</div>
           </div>
         </div>
         <div class="col-md-8">
-          <div class="card">
-            <div class="card-body">
-              <div class="text-muted small">Tracking link</div>
-              <div class="d-flex flex-wrap gap-2 align-items-center">
-                <code class="p-2 bg-light border rounded">{{ request.host_url }}t/{{ ticket.tracking_token }}</code>
-                <a class="btn btn-sm btn-primary" href="{{ url_for('track', token=ticket.tracking_token) }}">Open Tracking Record</a>
-              </div>
-              <div class="small text-muted mt-2">
-                Anyone with this link can view the ticket details.
-              </div>
+          <div class="verification-summary h-100 bg-white">
+            <div class="text-muted small mb-2">Private tracking link</div>
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+              <code class="p-2 bg-light border rounded flex-grow-1">{{ request.host_url }}t/{{ ticket.tracking_token }}</code>
+              <a class="btn btn-primary btn-sm" href="{{ url_for('track', token=ticket.tracking_token) }}">Open tracking page</a>
             </div>
+            <div class="small text-muted mt-2">Anyone with this link can view the ticket details.</div>
           </div>
         </div>
       </div>
 
-      <div class="mt-4 card">
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="verification-step h-100">
+            <div class="fw-semibold">1. Track progress</div>
+            <div class="small text-muted mt-1">Return to the tracking page anytime to see public technician updates.</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="verification-step h-100">
+            <div class="fw-semibold">2. Review proof of fix</div>
+            <div class="small text-muted mt-1">When work is complete, proof and verification results will appear on your tracking page.</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="verification-step h-100">
+            <div class="fw-semibold">3. Confirm closure</div>
+            <div class="small text-muted mt-1">Sign only after you agree the issue has been resolved.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 bg-light">
         <div class="card-body">
           <h2 class="h6 mb-3">Initial Assessment</h2>
           <div class="row g-3">
@@ -50,27 +71,25 @@
                 {% if ticket.assigned_technician %}{{ ticket.assigned_technician.name }} ({{ ticket.assigned_technician.skill_group }}){% else %}Unassigned{% endif %}
               </div>
             </div>
-
             {% if ticket.ai_summary %}
             <div class="col-12">
               <div class="text-muted small">Issue Summary</div>
-              <div class="p-3 bg-light border rounded">{{ ticket.ai_summary }}</div>
+              <div class="p-3 bg-white border rounded">{{ ticket.ai_summary }}</div>
             </div>
             {% endif %}
-
             {% if ticket.ai_solution_suggestion %}
             <div class="col-12">
               <div class="text-muted small">Recommended Resolution</div>
-              <pre class="mb-0 p-3 bg-light border rounded small">{{ ticket.ai_solution_suggestion }}</pre>
+              <pre class="mb-0 p-3 bg-white border rounded small">{{ ticket.ai_solution_suggestion }}</pre>
             </div>
             {% endif %}
           </div>
         </div>
       </div>
 
-      <div class="mt-4">
-        <a class="btn btn-outline-dark" href="{{ url_for('submit') }}">Submit Another Ticket</a>
-        <a class="btn btn-outline-secondary ms-2" href="{{ url_for('index') }}">Return to Home</a>
+      <div class="mt-4 d-flex gap-2 flex-wrap">
+        <a class="btn btn-outline-dark" href="{{ url_for('submit') }}">Submit another ticket</a>
+        <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">Return home</a>
       </div>
     </div>
   </div>

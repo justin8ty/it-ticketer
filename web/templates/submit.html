@@ -1,57 +1,81 @@
 ﻿{% extends "base.html" %}
 {% block content %}
+<div class="page-header">
+  <div>
+    <div class="home-eyebrow">Requester form</div>
+    <h1 class="h3 mb-1">Submit a Support Ticket</h1>
+    <p class="text-muted mb-0">Tell us what happened and how to contact you. You will receive a private tracking link after submission.</p>
+  </div>
+</div>
+
 <div class="row justify-content-center">
   <div class="col-lg-8">
-    <div class="p-4 rounded-4 border bg-white">
-      <h1 class="h4 mb-3">Submit a Support Ticket</h1>
+    <div class="panel">
       <form method="post" enctype="multipart/form-data">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Full Name *</label>
-            <input class="form-control" name="requester_name" required>
+        <section class="mb-4">
+          <h2 class="h6 mb-3">Your contact details</h2>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Full Name *</label>
+              <input class="form-control" name="requester_name" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email *</label>
+              <input class="form-control" type="email" name="requester_email" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone Number</label>
+              <input class="form-control" name="requester_phone" placeholder="Optional">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Telegram Chat ID</label>
+              <input class="form-control" name="requester_telegram_chat_id" placeholder="Optional, example: 123456789">
+            </div>
           </div>
-          <div class="col-md-6">
-            <label class="form-label">Email *</label>
-            <input class="form-control" type="email" name="requester_email" required>
+        </section>
+
+        <section class="mb-4">
+          <h2 class="h6 mb-3">Notification preferences</h2>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">How should we notify you?</label>
+              <select class="form-select" name="requester_notification_preference">
+                <option value="BOTH">Email + Telegram</option>
+                <option value="EMAIL">Email only</option>
+                <option value="TELEGRAM">Telegram only</option>
+                <option value="NONE">Do not notify me</option>
+              </select>
+            </div>
           </div>
-          <div class="col-md-6">
-            <label class="form-label">Phone Number (optional)</label>
-            <input class="form-control" name="requester_phone">
+        </section>
+
+        <section class="mb-4">
+          <h2 class="h6 mb-3">Issue details</h2>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Issue Title *</label>
+              <input class="form-control" name="issue_title" required placeholder="Example: Unable to print to Canon imageRUNNER">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Description *</label>
+              <div class="form-text mb-2">Include the affected device, location, error messages, and business impact if relevant.</div>
+              <textarea class="form-control" name="description" rows="6" required placeholder="Describe the issue clearly..."></textarea>
+            </div>
           </div>
-          <div class="col-md-6">
-            <label class="form-label">Notification Preference</label>
-            <select class="form-select" name="requester_notification_preference">
-              <option value="BOTH">Email + Telegram</option>
-              <option value="EMAIL">Email only</option>
-              <option value="TELEGRAM">Telegram only</option>
-              <option value="NONE">Do not notify me</option>
-            </select>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Telegram Chat ID (optional)</label>
-            <input class="form-control" name="requester_telegram_chat_id" placeholder="Example: 123456789">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Supporting Attachment (optional)</label>
-            <input class="form-control" type="file" name="attachment">
-          </div>
-          <div class="col-12">
-            <label class="form-label">Issue Title *</label>
-            <input class="form-control" name="issue_title" required placeholder="Example: Unable to print to Canon imageRUNNER">
-          </div>
-          <div class="col-12">
-            <label class="form-label">Description *</label>
-            <textarea class="form-control" name="description" rows="5" required placeholder="Describe the issue, affected device, location, error messages, and business impact."></textarea>
-          </div>
-        </div>
-        <div class="mt-4 d-flex gap-2">
-          <button class="btn btn-primary" type="submit">Submit</button>
+        </section>
+
+        <section class="mb-4">
+          <h2 class="h6 mb-3">Supporting attachment</h2>
+          <label class="form-label">Upload a file</label>
+          <input class="form-control" type="file" name="attachment">
+          <div class="form-text">Optional. Add a screenshot, document, or photo if it helps explain the problem.</div>
+        </section>
+
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-primary" type="submit">Submit ticket</button>
           <a class="btn btn-outline-secondary" href="{{ url_for('index') }}">Cancel</a>
         </div>
       </form>
-      <div class="small text-muted mt-3">
-        After submission, you will receive a ticket ID and private tracking link. No sign-in is required to review status updates.
-      </div>
     </div>
   </div>
 </div>
