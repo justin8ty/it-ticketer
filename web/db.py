@@ -1,20 +1,50 @@
 import time
+from pathlib import Path
 
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, event
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from config import CATEGORIES, DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER, PRIORITIES, STATUSES
+from config import (
+    CATEGORIES,
+    DB_ENGINE,
+    DB_HOST,
+    DB_NAME,
+    DB_PASSWORD,
+    DB_PORT,
+    DB_USER,
+    PRIORITIES,
+    SQLITE_PATH,
+    STATUSES,
+)
 
 Base = declarative_base()
 
 
 def build_db_url() -> str:
-    # mysql+pymysql://user:pass@host:port/dbname?charset=utf8mb4
+    if DB_ENGINE == "sqlite":
+        db_path = Path(SQLITE_PATH)
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        return f"sqlite:///{db_path}"
+
     return f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
 
 
-engine = create_engine(build_db_url(), pool_pre_ping=True, future=True)
+if DB_ENGINE == "sqlite":
+    engine = create_engine(
+        build_db_url(),
+        connect_args={"check_same_thread": False},
+        future=True,
+    )
+
+    @event.listens_for(engine, "connect")
+    def _enable_sqlite_foreign_keys(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+else:
+    engine = create_engine(build_db_url(), pool_pre_ping=True, future=True)
+
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 
@@ -538,6 +568,9 @@ def _finalize_erd_schema(conn) -> None:
 
 
 def migrate_schema() -> None:
+    if DB_ENGINE == "sqlite":
+        return
+    
     with engine.begin() as conn:
         _rename_legacy_tables(conn)
         _create_target_tables(conn)

@@ -49,6 +49,8 @@ DB_PORT = int(os.getenv("DB_PORT", "3306"))
 DB_NAME = os.getenv("DB_NAME", "ticketdb")
 DB_USER = os.getenv("DB_USER", "ticketuser")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "ticketpass")
+DB_ENGINE = os.getenv("DB_ENGINE", "mysql").strip().lower()
+SQLITE_PATH = os.getenv("SQLITE_PATH", "/app/data/ticketdb.sqlite3").strip()
 
 # Automated assessment service (Gemini)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
