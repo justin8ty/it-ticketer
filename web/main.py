@@ -11,6 +11,7 @@ from tickets import ensure_seed_data
 def create_app() -> Flask:
     app = Flask(__name__)
 
+    @app.route("/smtp-test")
     def smtp_test():
         import socket
 
