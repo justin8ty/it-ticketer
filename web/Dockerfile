@@ -16,6 +16,6 @@ COPY . /app
 
 RUN mkdir -p /app/data /app/uploads
 
-EXPOSE 8080
+EXPOSE 10000
 
-CMD sh -c "gunicorn --workers 1 --timeout 120 -b 0.0.0.0:${PORT:-8080} main:app"
+CMD sh -c "gunicorn --workers ${WEB_CONCURRENCY:-1} --timeout 120 --bind 0.0.0.0:${PORT:-10000} main:app"
