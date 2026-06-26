@@ -1,50 +1,98 @@
-# Smart AI Ticket Management System — Simplified Docker Prototype (FYP1)
+# Smart AI Ticket Management System
 
-This prototype focuses only on the **core workflow** (no extra “architecture showcase” content in the UI):
+This is a web-based IT support ticket management system developed for FYP2.
+It supports requester ticket submission, AI triage, technician handling, admin monitoring, and closure verification.
 
-- **Requester (no login)**: submit a ticket → get **Ticket ID + tracking link**
-- **Tracking page**: view ticket details, status, public replies, attachments
-- **AI triage (optional)**: if `GEMINI_API_KEY` is set, the system generates summary/category/priority/skill-group + suggested solution; otherwise it uses a stub
-- **AI health check questions (optional)**: if `GEMINI_API_KEY` is set, the technician health checklist is generated per ticket; otherwise it uses the built-in fallback list
-- **Technician**: login → view assigned tickets → update status → reply (public/internal) → upload attachments → upload proof-of-fix
-- **Closure verification gate (aligned with your latest flow)**:
-  1) proof-of-fix uploaded
-  2) health verification checklist recorded (PASS) **or** admin supervisor override
-  3) requester confirms closure by drawing an **e-sign** on the tracking page
+## Main Features
 
-> Important: your previous zip contained a real API key in `.env`. **Revoke that key** and replace it with a new one before you ever use it again.
+* Requester can submit ticket without login
+* Requester receives Ticket ID and private tracking link
+* Requester can track ticket status using the tracking link
+* Gemini AI can generate ticket summary, category, priority, technician skill group, and suggested solution
+* Technician can view assigned tickets, update status, reply, upload attachments, and upload proof-of-fix
+* Admin can monitor tickets, manage technician accounts, edit allowed ticket fields, and view logs
+* Ticket closure requires proof-of-fix, health verification, and requester e-sign confirmation
+* Email and Telegram notification are supported depending on configuration
 
----
+## Technology Used
 
-## Run
+* Python Flask
+* HTML, CSS, JavaScript
+* SQLite
+* SQLAlchemy
+* Gemini API
+* Docker
+* Gunicorn
+* Render
 
-1. Extract the zip
-2. (Optional) copy `.env.example` → `.env` and fill what you need
-3. Start:
+## How to Run Locally
+
+1. Open the project folder:
+
+```bash
+cd it-ticketer
+```
+
+2. Copy `.env.example` to `.env` and update the settings if needed.
+
+3. Start the system:
 
 ```bash
 docker compose up --build
 ```
 
-Open: http://localhost:8080
+4. Open in browser:
 
-### If you ran the older prototype before
-The schema changed. Reset the old MySQL volume:
-
-```bash
-docker compose down -v
+```text
+http://localhost:8080
 ```
 
----
+## Demo Accounts
 
-## Demo accounts (auto-seeded)
+Admin:
 
-- **Admin**: `admin@demo.local` / `admin123`
-- **Technicians**: `net@demo.local`, `hw@demo.local`, `sw@demo.local`, `print@demo.local` / `tech123`
+```text
+admin@demo.local / admin123
+```
 
----
+Technicians:
+
+```text
+net@demo.local / tech123
+hw@demo.local / tech123
+sw@demo.local / tech123
+print@demo.local / tech123
+```
+
+## Database
+
+The system uses SQLite.
+Inside Docker, the database file is stored at:
+
+```text
+/app/data/ticketdb.sqlite3
+```
+
+To copy the database file out:
+
+```bash
+docker compose cp web:/app/data/ticketdb.sqlite3 ./ticketdb.sqlite3
+```
+
+## Online Deployment
+
+The system is deployed on Render for FYP demonstration and testing.
+
+```text
+Browser → Render Flask App → SQLite database file
+```
+
+The online version is not meant for long-term production storage because the SQLite database and uploaded files are stored inside the Render environment.
 
 ## Notes
 
-- File integrity: attachments store a **SHA-256** hash (watermarking is not implemented in this prototype).
-- Security is prototype-level only (do not deploy publicly).
+* Do not upload real API keys or passwords to GitHub.
+* Requester tracking uses a private tracking token.
+* Public replies are visible to requester.
+* Internal notes are only visible to staff.
+* Admin actions are recorded in the action log.
