@@ -89,10 +89,5 @@ Browser → Render Flask App → SQLite database file
 
 The online version is not meant for long-term production storage because the SQLite database and uploaded files are stored inside the Render environment.
 
-## Notes
-
-* Do not upload real API keys or passwords to GitHub.
-* Requester tracking uses a private tracking token.
-* Public replies are visible to requester.
 * Internal notes are only visible to staff.
 * Admin actions are recorded in the action log.
