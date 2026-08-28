@@ -47,7 +47,7 @@ services:
       - sqlite_data:/app/data
 
     ports:
-      - "8080:8080"
+      - "8080:10000"
 
 volumes:
   uploads:
